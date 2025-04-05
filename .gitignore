@@ -1,58 +1,31 @@
-# Node.js dependencies
+# Node
 node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# macOS system files
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Build output
-dev-dist/
-dist/
-build/
-out/
-
-# Environment variables
+npm-debug.log
 .env
 .env.local
-.env.*.local
+client/dist/
+client/dev-dist/
+client/node_modules/
+server/node_modules/
+dist/
+build/
 
-# Editor directories and files
+# Vite (or Vue CLI)
+client/.vite/
+client/dist/
+
+# Express server
+server/data.zip
+server/*.log
+
+# macOS
+.DS_Store
+
+# IDEs
 .idea/
 .vscode/
-*.swp
-*.swo
-*.swn
 
-# Coverage reports
-coverage/
-*.lcov
-
-# Temporary files
-*.tmp
-*.temp
-
-# PWA specific
-service-worker.js
-workbox-*.js
-precache-manifest*.js
-
-# macOS Finder attributes
-._*
-
-# Thumbnails
-Thumbs.db
-
-# Other
-*.bak
-*.orig
+# Others
+*.local
+*.zip
+cookies.txt

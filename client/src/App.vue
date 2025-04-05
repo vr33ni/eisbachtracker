@@ -10,16 +10,20 @@
 
       <!-- Water Data -->
       <div class="space-y-2">
-        <p class="text-xl text-gray-700 dark:text-gray-300">
+        <p class="text-lg text-gray-700 dark:text-gray-300">
           {{ waterLevelText }}
         </p>
         <p class="text-lg text-gray-700 dark:text-gray-300">
           {{ waterFlowText }}
         </p>
-        <!-- Underneath water flow -->
-        <div v-if="dailyAvg" class="mt-8 text-gray-700 dark:text-gray-300 text-sm">
-          <p>🌡️ Water Temp Avg: <strong>{{ dailyAvg }}</strong></p>
-          <p>⬆️ Max: <strong>{{ dailyMax }}</strong> · ⬇️ Min: <strong>{{ dailyMin }}</strong></p>
+        <p class="text-lg text-gray-700 dark:text-gray-300">
+          Current Water Temperature:</p>
+        <div v-if="loading">Loading...</div>
+        <div v-else-if="error">❌ {{ error }}</div>
+        <div v-else>
+            🌡️ {{ temperature }} °C
+        </div>
+        <div>
         </div>
 
       </div>
@@ -44,9 +48,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import WaterChart from './components/WaterChart.vue'
-import { useDailyWaterTemperature } from '@/composables/useWaterTemperatureData';
-const { dailyAvg, dailyMax, dailyMin } = useDailyWaterTemperature()
-
+import { useTemperature } from '@/composables/useWaterTemperatureData'
 
 const chartLabels = ref<string[]>([])
 const chartValues = ref<number[]>([])
@@ -54,8 +56,13 @@ const chartValues = ref<number[]>([])
 const waterLevelText = ref('Loading...')
 const waterFlowText = ref('Loading...')
 const showWaterLevelAlert = ref(false)
+const { temperature, loading, error, fetchTemperature } = useTemperature()
 
 const apiUrl = import.meta.env.VITE_API_URL
+
+onMounted(() => {
+  fetchTemperature()
+})
 
 const notifyUser = (waterLevel: number) => {
   if ("Notification" in window) {
