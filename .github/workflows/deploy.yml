@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - master  
+    paths:
+      - 'client/**'
+  pull_request:
+    paths:
+      - 'client/**'
 
 jobs:
   build-and-deploy:
@@ -19,10 +24,13 @@ jobs:
           node-version: 18
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          cd client
+          npm install
 
       - name: Build app with environment variable
         run: |
+          cd client
           echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> .env
           npm run build
 
@@ -30,6 +38,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
+          publish_dir: ./client/dist
           publish_branch: gh-pages      # ✅ Create the branch if it doesn't exist
           force_orphan: true            # ✅ Create a clean history
