@@ -18,11 +18,12 @@
         </p>
         <p class="text-lg text-gray-700 dark:text-gray-300">
           Current Water Temperature:</p>
-        <div v-if="loading">Loading...</div>
+        <div v-if="isLoading">{{ loadingMessage }}</div>
         <div v-else-if="error">❌ {{ error }}</div>
         <div v-else>
-            🌡️ {{ temperature }} °C
+          🌡️ {{ temperature }} °C
         </div>
+
         <div>
         </div>
 
@@ -34,10 +35,11 @@
       </div>
 
       <!-- Button -->
-      <button @click="checkWaterLevel"
-        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg font-medium shadow transition-all">
-        Refresh Data
+      <button @click="refreshEverything" :disabled="loading"
+        class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg font-medium shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+        {{ loading ? 'Refreshing...' : 'Refresh Data' }}
       </button>
+
     </div>
     <WaterChart :labels="chartLabels" :values="chartValues" />
   </div>
@@ -46,7 +48,7 @@
 
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import WaterChart from './components/WaterChart.vue'
 import { useTemperature } from '@/composables/useWaterTemperatureData'
 
@@ -56,13 +58,22 @@ const chartValues = ref<number[]>([])
 const waterLevelText = ref('Loading...')
 const waterFlowText = ref('Loading...')
 const showWaterLevelAlert = ref(false)
-const { temperature, loading, error, fetchTemperature } = useTemperature()
+const { temperature, loading, error, loadingMessage, fetchTemperature } = useTemperature()
 
-const apiUrl = import.meta.env.VITE_API_URL
+const apiUrl = import.meta.env.VITE_PEGEL_API_URL
 
 onMounted(() => {
   fetchTemperature()
 })
+
+const refreshEverything = () => {
+  checkWaterLevel()
+  fetchTemperature()
+}
+
+
+const isLoading = computed(() => temperature.value === null && !error.value)
+
 
 const notifyUser = (waterLevel: number) => {
   if ("Notification" in window) {
@@ -110,9 +121,6 @@ const fetchWaterData = async () => {
       // ✅ Optional: Keep it short
       if (chartLabels.value.length > 10) chartLabels.value.shift()
       if (chartValues.value.length > 10) chartValues.value.shift()
-
-      console.log("Labels:", chartLabels.value)
-      console.log("Values:", chartValues.value)
 
     } else {
       console.error('Stations data is missing or undefined')

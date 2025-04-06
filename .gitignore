@@ -3,20 +3,30 @@ node_modules/
 npm-debug.log
 .env
 .env.local
-client/dist/
-client/dev-dist/
-client/node_modules/
-server/node_modules/
-dist/
-build/
 
 # Vite (or Vue CLI)
 client/.vite/
 client/dist/
+client/dev-dist/
+client/node_modules/
+client/.env
+client/.env.local
 
 # Express server
-server/data.zip
-server/*.log
+node-server/node_modules/
+node-server/data.zip
+node-server/*.log
+node-server/.env
+ 
+# Go server
+go-server/data.zip
+go-server/*.log
+go-server/bin/
+go-server/vendor/
+go-server/*.exe
+go-server/*.test
+go-server/.env
+go-server/coverage.out
 
 # macOS
 .DS_Store
