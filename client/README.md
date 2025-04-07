@@ -28,29 +28,53 @@ A Progressive Web App (PWA) that shows live water level and flow for the Eisbach
 
 ### Clone & install
 
-    git clone https://github.com/your-username/eisbachtracker-pwa.git
-    cd eisbachtracker-pwa/client
-    npm install
+```bash
+git clone https://github.com/your-username/eisbachtracker-pwa.git
+cd eisbachtracker-pwa/client
+```
 
 ### Add your `.env` file
 
 Create a `.env` file at the root with:
 
-    VITE_PEGEL_API_URL=https://api.pegelalarm.at/api/station/1.0/list?commonid=16515005-de&responseDetailLevel=high
-    VITE_BACKEND_API_URL=http://localhost:8080/api/temperature
+`VITE_PEGEL_API_URL`=https://api.pegelalarm.at/api/station/1.0/list?commonid=16515005-de&responseDetailLevel=high
+`VITE_BACKEND_API_URL`=http://localhost:8080/api/temperature
 
 ### Run the app
 
-    npm run dev
+```cmd
+npm run dev
+```
 
 Visit: http://localhost:5173
 
 ---
 
+## 📱 Capacitor (iOS App)
+
+You can wrap the frontend and run it on an iOS device using Capacitor.
+
+### Setup (run from /client)
+
+```bash
+npm build
+npx cap init EisbachTracker com.vr33ni.eisbachtracker --web-dir=dist
+npx cap add ios
+npx cap open ios
+```
+
+Then build and run via Xcode.
+
+Note: You do not need the PWA install anymore on iOS if you use Capacitor. Capacitor bundles your app like a native one and can include the Go backend as a static lib (if embedded).
+
+---
+
 ## 🛠 Build & Preview (to locally test the install button - only works on Chrome)
 
-    npm build      # Builds to ./dist
-    npm preview    # Locally preview the built PWA
+```cmd
+npm build      # Builds to ./dist
+npm preview    # Locally preview the built PWA
+```
 
 ---
 
@@ -66,7 +90,9 @@ Go to **Settings > Secrets > Actions** and add:
 
 Update `vite.config.ts`:
 
-    base: './'
+```cmd
+base: './'
+```
 
 Push to `main` or `master`.
 
