@@ -4,11 +4,7 @@ on:
   push:
     branches:
       - master  
-    paths:
-      - 'client/**'
-  pull_request:
-    paths:
-      - 'client/**'
+
 
 jobs:
   build-and-deploy:
