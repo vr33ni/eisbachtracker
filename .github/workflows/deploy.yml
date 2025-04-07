@@ -31,7 +31,7 @@ jobs:
       - name: Build app with environment variable
         run: |
           cd client
-          echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" >> .env
+          echo "VITE_BACKEND_API_URL=${{ secrets.VITE_BACKEND_API_URL }}" >> .env
           npm run build
 
       - name: Deploy to GitHub Pages
