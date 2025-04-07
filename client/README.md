@@ -7,10 +7,20 @@ A Progressive Web App (PWA) that shows live water level and flow for the Eisbach
 ## 📦 Features
 
 - ✅ Live data from Pegelalarm API
-- ✅ Water level alert if below threshold
-- ✅ Works offline (PWA)
-- ✅ Installable on mobile & desktop
-- ✅ GitHub Actions CI/CD
+- ✅ Real-time water temperature (CSV extracted from gkd.bayern.de)
+- ✅ Crowd level prediction (coming soon) via user feedback
+- ✅ Works offline as a PWA (via service workers)
+- ✅ Installable as a native app with Capacitor
+- ✅ CI/CD deployment to GitHub Pages
+
+---
+
+## 🧱 Tech Stack
+
+- Frontend: Vue 3 + Vite + Tailwind CSS
+- Backend: Go (lightweight API for temperature data)
+- Native wrapper: Capacitor (for building iOS app)
+- CI/CD: GitHub Actions
 
 ---
 
@@ -19,18 +29,19 @@ A Progressive Web App (PWA) that shows live water level and flow for the Eisbach
 ### Clone & install
 
     git clone https://github.com/your-username/eisbachtracker-pwa.git
-    cd eisbachtracker-pwa
-    pnpm install   # or npm install
+    cd eisbachtracker-pwa/client
+    npm install
 
 ### Add your `.env` file
 
 Create a `.env` file at the root with:
 
-    VITE_API_URL=https://api.pegelalarm.at/api/station/1.0/list?commonid=16515005-de&responseDetailLevel=high
+    VITE_PEGEL_API_URL=https://api.pegelalarm.at/api/station/1.0/list?commonid=16515005-de&responseDetailLevel=high
+    VITE_BACKEND_API_URL=http://localhost:8080/api/temperature
 
 ### Run the app
 
-    pnpm dev
+    npm run dev
 
 Visit: http://localhost:5173
 
@@ -38,8 +49,8 @@ Visit: http://localhost:5173
 
 ## 🛠 Build & Preview (to locally test the install button - only works on Chrome)
 
-    pnpm build      # Builds to ./dist
-    pnpm preview    # Locally preview the built PWA
+    npm build      # Builds to ./dist
+    npm preview    # Locally preview the built PWA
 
 ---
 
@@ -51,11 +62,11 @@ Uses GitHub Actions + [`peaceiris/actions-gh-pages`](https://github.com/peaceiri
 
 Go to **Settings > Secrets > Actions** and add:
 
-- `VITE_API_URL`: same API URL as above
+- `VITE_BACKEND_API_URL` / `VITE_PEGEL_API_URL`: same API URLs as above
 
 Update `vite.config.ts`:
 
-    base: '/eisbachtracker-pwa/'
+    base: './'
 
 Push to `main` or `master`.
 
