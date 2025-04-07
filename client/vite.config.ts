@@ -6,8 +6,8 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  base: process.env.NODE_ENV === 'production' ? '/eisbachtracker-pwa/' : '/',
-    plugins: [
+  base: './',
+  plugins: [
     vue(),
     vueJsx(),
     vueDevTools(),

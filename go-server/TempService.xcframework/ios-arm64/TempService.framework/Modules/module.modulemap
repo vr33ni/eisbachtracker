@@ -1,8 +1,0 @@
-framework module "TempService" {
-	header "ref.h"
-    header "Tempservice.objc.h"
-    header "Universe.objc.h"
-    header "TempService.h"
-
-    export *
-}
