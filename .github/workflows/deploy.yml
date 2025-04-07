@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - master  
-
+ 
 
 jobs:
   build-and-deploy:
@@ -28,6 +28,7 @@ jobs:
         run: |
           cd client
           echo "VITE_BACKEND_API_URL=${{ secrets.VITE_BACKEND_API_URL }}" >> .env
+          echo "VITE_PEGEL_API_URL=${{ secrets.VITE_PEGEL_API_URL }}" >> .env
           npm run build
 
       - name: Deploy to GitHub Pages
