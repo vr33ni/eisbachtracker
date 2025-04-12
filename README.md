@@ -27,7 +27,7 @@ This repository contains both the frontend (Vue.js) and backend (Go) of the Eisb
 
 Check the respective READMEs for detailed setup and usage instructions:
 
-- [Frontend README](./frontend/README.md) — Vue.js Client
+- [Frontend README](./client/README.md) — Vue.js Client
 - [Go Backend README](./go-server/README.md) — Go API + Database Migrations + Render Deploy
 
 ---
