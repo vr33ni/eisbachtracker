@@ -120,7 +120,7 @@ const todaysEntries = computed(() =>
   })
 )
 
-// 📊 Prediction from past hour
+// 📊 Prediction from the past hour
 const currentHourPrediction = computed(() => {
   const now = new Date()
   const hourAgo = new Date(now.getTime() - 60 * 60 * 1000)
