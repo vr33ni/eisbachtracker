@@ -30,7 +30,6 @@ ENV PATH="/flyway:$PATH"
 # Copy compiled Go binary from build stage
 COPY --from=builder /app/main .
 
-
 # Copy only migration files
 COPY db/migrations ./db/migrations
 
@@ -40,5 +39,6 @@ COPY flyway.prod.conf ./flyway.conf
 # Expose port
 EXPOSE 8080
 
-# Run migrations + start app
-CMD flyway migrate && ./main
+# Run Flyway baseline if needed, then migrate, then start the Go app
+CMD flyway info || flyway baseline && flyway migrate && ./main
+
