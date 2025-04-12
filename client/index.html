@@ -1,21 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Eisbach Tracker</title>
 
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <!-- Correct reference to the PWA icon -->
     <link rel="icon" href="/eisbachtracker-pwa/pwa-icon.JPG" />
-    <!-- Link to PWA manifest -->
-    <link rel="manifest" href="/eisbachtracker-pwa/manifest.webmanifest" />
+
+    <!-- 🧠 Only load manifest in browser, not in Capacitor -->
+    <script>
+      if (location.protocol.startsWith('http')) {
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = '/eisbachtracker-pwa/manifest.webmanifest';
+        document.head.appendChild(link);
+      }
+    </script>
   </head>
   <body>
     <!-- This is where your Vue components will be injected -->
-    <div id="app"></div> 
+    <div id="app"></div>
 
     <!-- Main entry for Vue -->
     <script type="module" src="/src/main.ts"></script>

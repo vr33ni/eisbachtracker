@@ -17,7 +17,7 @@ export function useTemperature() {
   const temperature = ref(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
-  const apiUrl = import.meta.env.VITE_BACKEND_API_URL
+  const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL
   const loadingMessage = ref(messages[0])
   let interval: ReturnType<typeof setInterval> | null = null
 
@@ -34,7 +34,7 @@ export function useTemperature() {
     }, 3000)
 
     try {
-      const res = await axios.get(apiUrl)
+      const res = await axios.get(`${API_BASE_URL}/temperature`)
       temperature.value = res.data.temperature
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to fetch temperature'

@@ -15,7 +15,7 @@ export default defineConfig({
       manifest: {
         name: 'EisbachTracker PWA',
         short_name: 'EisbachTracker',
-        description: 'Your app description',
+        description: 'Live stats for water level and flow of the Eisbach River in Munich',
         start_url: '/eisbachtracker-pwa/',  
         icons: [
           {

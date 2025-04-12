@@ -1,0 +1,7 @@
+.git
+.env
+*.md
+*.DS_Store
+db/dumps
+tmp
+build

@@ -13,19 +13,49 @@ import (
 	"time"
 )
 
-func GetLatestTemperature() (float64, error) {
-	jar, _ := cookiejar.New(nil)
-	client := &http.Client{Jar: jar}
-
-	page := "https://www.gkd.bayern.de/de/fluesse/wassertemperatur/kelheim/muenchen-himmelreichbruecke-16515005/download"
-
-	// Step 1: Get session
-	_, err := client.Get(page)
+func createHTTPClient() (*http.Client, error) {
+	jar, err := cookiejar.New(nil)
 	if err != nil {
-		return 0, err
+		return nil, err
+	}
+	return &http.Client{Jar: jar}, nil
+}
+
+func GetLatestTemperature() (float64, error) {
+	client, err := createHTTPClient()
+	if err != nil {
+		return 0, fmt.Errorf("creating HTTP client: %w", err)
 	}
 
-	// Step 2: POST form
+	token, err := requestDownloadToken(client)
+	if err != nil {
+		return 0, fmt.Errorf("getting token: %w", err)
+	}
+
+	downloadURL := fmt.Sprintf("https://www.gkd.bayern.de/de/downloadcenter/download?token=%s&dl=1", token)
+
+	zipPath, err := pollAndDownloadZip(client, downloadURL)
+	if err != nil {
+		return 0, fmt.Errorf("downloading zip: %w", err)
+	}
+	defer os.Remove(zipPath)
+
+	records, err := extractCSV(zipPath)
+	if err != nil {
+		return 0, fmt.Errorf("parsing CSV: %w", err)
+	}
+
+	return parseLatestTemperature(records)
+}
+
+func requestDownloadToken(client *http.Client) (string, error) {
+	page := "https://www.gkd.bayern.de/de/fluesse/wassertemperatur/kelheim/muenchen-himmelreichbruecke-16515005/download"
+
+	_, err := client.Get(page)
+	if err != nil {
+		return "", err
+	}
+
 	form := url.Values{
 		"zr":       {"monat"},
 		"beginn":   {"01.04.2025"},
@@ -39,7 +69,7 @@ func GetLatestTemperature() (float64, error) {
 
 	req, err := http.NewRequest("POST", "https://www.gkd.bayern.de/de/downloadcenter/enqueue_download", strings.NewReader(form.Encode()))
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
 	req.Header.Set("User-Agent", "Mozilla/5.0")
@@ -49,7 +79,7 @@ func GetLatestTemperature() (float64, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 	defer resp.Body.Close()
 
@@ -58,88 +88,83 @@ func GetLatestTemperature() (float64, error) {
 
 	tokenStart := strings.Index(bodyStr, "token=")
 	if tokenStart == -1 {
-		return 0, fmt.Errorf("token not found")
+		return "", fmt.Errorf("token not found")
 	}
+
 	tokenRaw := bodyStr[tokenStart+6:]
 	tokenEnd := strings.IndexAny(tokenRaw, `"'><&`)
 	if tokenEnd == -1 {
 		tokenEnd = len(tokenRaw)
 	}
-	token := strings.TrimSuffix(strings.TrimSpace(tokenRaw[:tokenEnd]), `\`)
+	return strings.TrimSuffix(strings.TrimSpace(tokenRaw[:tokenEnd]), `\`), nil
+}
 
-	downloadUrl := fmt.Sprintf("https://www.gkd.bayern.de/de/downloadcenter/download?token=%s&dl=1", token)
-
-	// Step 3: Poll for readiness
-	isReady := false
+func pollAndDownloadZip(client *http.Client, downloadURL string) (string, error) {
 	for i := 0; i < 15; i++ {
-		head, _ := client.Head(downloadUrl)
-		if head != nil && head.StatusCode == 200 && head.ContentLength > 0 && strings.Contains(head.Header.Get("Content-Type"), "zip") {
-			isReady = true
-			break
+		head, _ := client.Head(downloadURL)
+		if head != nil &&
+			head.StatusCode == 200 &&
+			head.ContentLength > 0 &&
+			strings.Contains(head.Header.Get("Content-Type"), "zip") {
+			goto Ready
 		}
 		time.Sleep(3 * time.Second)
 	}
-	if !isReady {
-		return 0, fmt.Errorf("download not ready")
-	}
+	return "", fmt.Errorf("download not ready")
 
-	// Step 4: Download ZIP
-	zipPath := "./data.zip"
-	zipRes, err := client.Get(downloadUrl)
+Ready:
+	resp, err := client.Get(downloadURL)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
-	defer zipRes.Body.Close()
+	defer resp.Body.Close()
 
-	if !strings.Contains(zipRes.Header.Get("Content-Type"), "zip") {
-		bodyPreview, _ := io.ReadAll(zipRes.Body)
-		return 0, fmt.Errorf("not a zip file. Body: %s", string(bodyPreview[:300]))
+	path := os.TempDir() + "/data.zip"
+
+	out, err := os.Create(path)
+	if err != nil {
+		return "", err
 	}
-
-	out, _ := os.Create(zipPath)
 	defer out.Close()
-	io.Copy(out, zipRes.Body)
 
-	// Step 5: Unzip & find CSV
+	_, err = io.Copy(out, resp.Body)
+	return path, err
+}
+
+func extractCSV(zipPath string) ([][]string, error) {
 	zipFile, err := zip.OpenReader(zipPath)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	defer zipFile.Close()
 
-	var csvLines []string
 	for _, f := range zipFile.File {
 		if strings.HasSuffix(f.Name, ".csv") {
 			rc, _ := f.Open()
 			defer rc.Close()
-			bytes, _ := io.ReadAll(rc)
-			allLines := strings.Split(string(bytes), "\n")
+			content, _ := io.ReadAll(rc)
+			lines := strings.Split(string(content), "\n")
 
-			for i, line := range allLines {
+			for i, line := range lines {
 				if strings.HasPrefix(strings.TrimSpace(line), "Datum") {
-					csvLines = allLines[i:]
-					break
+					reader := csv.NewReader(strings.NewReader(strings.Join(lines[i:], "\n")))
+					reader.Comma = ';'
+					reader.FieldsPerRecord = -1
+					return reader.ReadAll()
 				}
 			}
-			break
 		}
 	}
+	return nil, fmt.Errorf("no valid CSV found")
+}
 
-	if len(csvLines) < 2 {
-		return 0, fmt.Errorf("no temperature data found")
+func parseLatestTemperature(rows [][]string) (float64, error) {
+	if len(rows) < 2 {
+		return 0, fmt.Errorf("no data in CSV")
 	}
-
-	// Step 6: Parse CSV
-	reader := csv.NewReader(strings.NewReader(strings.Join(csvLines, "\n")))
-	reader.Comma = ';'
-	reader.FieldsPerRecord = -1
-	rows, _ := reader.ReadAll()
-
 	last := rows[len(rows)-1]
 	tempStr := strings.ReplaceAll(last[1], ",", ".")
 	var temp float64
 	fmt.Sscanf(tempStr, "%f", &temp)
-
-	os.Remove(zipPath)
 	return temp, nil
 }

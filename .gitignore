@@ -3,6 +3,7 @@ node_modules/
 npm-debug.log
 .env
 .env.local
+.env.production 
 
 # Vite (or Vue CLI)
 client/.vite/
@@ -27,6 +28,7 @@ go-server/*.exe
 go-server/*.test
 go-server/.env
 go-server/coverage.out
+go-server/main
 
 # macOS
 .DS_Store

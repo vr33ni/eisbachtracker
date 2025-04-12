@@ -4,9 +4,117 @@
 
 The Go server downloads a CSV file from gkd.bayern.de, unzips it, and extracts the latest water temperature.
 
+Powered by:
+
+- Go (1.24)
+- PostgreSQL (Neon in production)
+- Flyway for DB migrations
+- Render for hosting
+- Makefile for local DX
+
+---
+
+## Local Development Setup
+
+### Prerequisites
+
+- Go installed (>= 1.24)
+- PostgreSQL running locally
+- Flyway installed → https://flywaydb.org/download
+
+---
+
+### Local .env for Go
+
 ```cmd
-cd ../go-server
-go run main.go
+//.env
+DATABASE_URL=postgres://your-username@localhost:5432/eisbach 
+ENV=local
 ```
 
-This serves the /api/temperature endpoint on port 8080.
+---
+
+### Flyway Config for Local
+
+```cmd
+//flyway.conf
+flyway.url=jdbc:postgresql://localhost:5432/eisbach?sslmode=disable flyway.user=your-username 
+flyway.password= 
+flyway.schemas=public 
+flyway.locations=filesystem:./db/migrations
+```
+
+
+---
+
+## Useful Make Commands (local only)
+
+|Command|What it does|
+|-------|------------|
+|`make run`|Run Go server locally|
+|`make migrate-local`|Apply local DB migrations|
+|`make reset-local`|Drop & recreate local DB & run migrations|
+|`make flyway-info-local`|Show local migration status|
+|`make flyway-repair-local`|Repair Flyway checksums locally|
+
+---
+
+## API Endpoints
+
+|Endpoint|Method|Description|
+|--------|------|-----------|
+|`/api/surfers`|GET|Get all surfer entries|
+|`/api/surfers`|POST|Add new surfer entry|
+|`/api/surfers/predict`|GET|Predict surfer count|
+|`/api/temperature`|GET|Get latest temperature|
+
+---
+
+## Production Deploy (Render)
+
+Production = Dockerized Go server running on Render  
+DB = Neon Postgres Cloud Database
+
+---
+
+### Dockerfile (multi-stage)
+
+- Compiles Go binary
+- Installs Flyway
+- Runs `flyway migrate` automatically on container start
+- Runs Go app
+
+---
+
+### Environment Variables on Render
+
+|Key|Value|
+|---|-----|
+|DATABASE_URL|Postgres URL for Go app (Neon)|
+|FLYWAY_URL|JDBC URL for Flyway (Neon)|
+|FLYWAY_USER|neondb_owner|
+|FLYWAY_PASSWORD|password|
+|ENV|production|
+
+---
+
+### Render Settings
+
+|Field|Value|
+|-----|-----|
+|Root Directory|`go-server`|
+|Build Command|`docker build -t eisbach .`|
+|Start Command|leave empty|
+
+---
+
+## Prod Migrations (manual trigger)
+
+If you add a new migration file (like `V3__add_column.sql`):
+
+Run locally:
+```bash
+make migrate-prod
+````
+
+(This applies migrations to Neon DB)
