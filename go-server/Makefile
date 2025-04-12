@@ -24,7 +24,13 @@ reset-local:
 
 # ---- FLYWAY PROD (Neon) ----
 migrate-prod:
-	flyway -configFiles=flyway-prod.conf migrate
+	flyway -configFiles=flyway.prod.conf migrate
 
 flyway-info-prod:
-	flyway -configFiles=flyway-prod.conf info
+	flyway -configFiles=flyway.prod.conf info
+
+flyway-baseline-prod:
+	flyway -configFiles=flyway.prod.conf baseline
+
+flyway-repair-prod:
+	flyway -configFiles=flyway.prod.conf repair

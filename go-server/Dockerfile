@@ -19,7 +19,8 @@ FROM debian:bullseye-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y ca-certificates curl unzip postgresql-client bash && rm -rf /var/lib/apt/lists/*
+# Add certificates & curl (optional)
+RUN apt-get update && apt-get install -y ca-certificates curl unzip postgresql-client && rm -rf /var/lib/apt/lists/*
 
 # Install Flyway manually
 RUN curl -L https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/11.7.0/flyway-commandline-11.7.0-linux-x64.tar.gz | tar xvz && mv flyway-11.7.0 /flyway
@@ -38,6 +39,5 @@ COPY flyway.prod.conf ./flyway.conf
 # Expose port
 EXPOSE 8080
 
-# Run Flyway baseline if needed, then migrate, then start the Go app
-CMD bash -c "(flyway info || flyway baseline) && flyway migrate && ./main"
-
+# Run migrations + start app
+CMD flyway migrate && ./main
