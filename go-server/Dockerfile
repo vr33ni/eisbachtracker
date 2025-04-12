@@ -35,7 +35,7 @@ COPY --from=builder /app/main .
 COPY db/migrations ./db/migrations
 
 # Copy Flyway config for prod (url/user/pass via ENV vars)
-COPY flyway-prod.conf ./flyway.conf
+COPY flyway.prod.conf ./flyway.conf
 
 # Expose port
 EXPOSE 8080
