@@ -36,6 +36,9 @@ COPY db/migrations ./db/migrations
 # Copy Flyway config for prod (url/user/pass via ENV vars)
 COPY flyway.prod.conf ./flyway.conf
 
+# Add this in final stage
+COPY config/predict.toml ./predict.toml
+
 # Expose port
 EXPOSE 8080
 
