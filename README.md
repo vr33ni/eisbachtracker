@@ -32,6 +32,13 @@ Check the respective READMEs for detailed setup and usage instructions:
 
 ---
 
+## Future Ideas
+
+- Add automatic canary deployments on pull requests
+  - Deploy PRs to `/canary/{branch-name}` on GitHub Pages
+  - Optional: Deploy backend canary to Render preview environment
+  - Automatically comment preview URL on PR
+
 ## License
 
 MIT — Feel free to use, adapt, and surf responsibly 🏄‍♀️
