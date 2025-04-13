@@ -56,10 +56,16 @@ func handlePrediction(service *surferdata.Service) http.HandlerFunc {
 		airTempStr := r.URL.Query().Get("air_temperature")
 		conditionStr := r.URL.Query().Get("weather_condition")
 
-		hour, err := strconv.Atoi(hourStr)
-		if err != nil {
-			http.Error(w, "Invalid or missing hour", http.StatusBadRequest)
-			return
+		var hour int
+		if hourStr == "" {
+			hour = time.Now().Hour()
+		} else {
+			var err error
+			hour, err = strconv.Atoi(hourStr)
+			if err != nil {
+				http.Error(w, "Invalid hour", http.StatusBadRequest)
+				return
+			}
 		}
 
 		var waterTemp, airTemp *float64
@@ -133,9 +139,11 @@ func handleSurferEntries(service *surferdata.Service) http.HandlerFunc {
 			}
 
 			if err := service.AddEntry(input.Count, input.Time); err != nil {
+				log.Printf("Failed to add entry: %v", err)
 				http.Error(w, "Failed to save entry", http.StatusInternalServerError)
 				return
 			}
+
 			w.WriteHeader(http.StatusCreated)
 			json.NewEncoder(w).Encode(map[string]string{"message": "Entry saved"})
 

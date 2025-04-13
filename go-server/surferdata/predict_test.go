@@ -1,27 +1,13 @@
 package surferdata
 
 import (
-	"context"
 	"testing"
 
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/vr33ni/eisbachtracker-pwa/go-server/utils"
 )
 
-func setupTestService(t *testing.T) *Service {
-	LoadTestConfig(t)
-
-	db, err := pgxpool.New(context.Background(), "postgres://vreeni@localhost:5432/eisbach")
-	if err != nil {
-		t.Fatalf("Failed to connect to test DB: %v", err)
-	}
-
-	return NewService(db)
-}
-
 func TestPredictSurferCount_HourOnly(t *testing.T) {
 	service := setupTestService(t)
-
 	pred, err := service.PredictSurferCountAdvanced(PredictionParams{
 		Hour: 14,
 	})

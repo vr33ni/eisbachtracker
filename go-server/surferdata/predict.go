@@ -53,10 +53,3 @@ func (s *Service) PredictSurferCountAdvanced(params PredictionParams) (int, erro
 
 	return pred, nil
 }
-
-func safeFloat(f *float64) float64 {
-	if f == nil {
-		return 0
-	}
-	return *f
-}

@@ -11,6 +11,9 @@ clean:
 	flyway -configFiles=flyway.conf migrate
 
 # ---- FLYWAY LOCAL ----
+seed-local:
+	psql postgres://vreeni@localhost:5432/eisbach -f db/seed.sql
+
 migrate-local:
 	flyway -configFiles=flyway.conf migrate
 

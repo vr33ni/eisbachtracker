@@ -47,7 +47,7 @@ func (s *Service) AddEntry(count int, when time.Time) error {
 	waterTemp, err := conditions.GetCachedWaterTemperature()
 	if err != nil {
 		log.Println("⚠️ Could not fetch water temp:", err)
-		waterTemp = 0
+		waterTemp = 0 // always store 0
 	}
 
 	_, err = s.DB.Exec(context.Background(),
@@ -58,8 +58,7 @@ func (s *Service) AddEntry(count int, when time.Time) error {
 	return err
 }
 
-// GetAllEntries retrieves all surfer entries, ordered from newest to oldest.
-func (s *Service) GetAllEntries() ([]SurferEntry, error) {
+func (s *Service) GetAllEntries() ([]SurferEntryResponse, error) {
 	rows, err := s.DB.Query(context.Background(),
 		`SELECT timestamp, count, water_temperature, air_temperature, weather_condition FROM surfer_entries ORDER BY timestamp DESC`)
 	if err != nil {
@@ -67,14 +66,34 @@ func (s *Service) GetAllEntries() ([]SurferEntry, error) {
 	}
 	defer rows.Close()
 
-	var entries []SurferEntry
+	var entries []SurferEntryResponse
 	for rows.Next() {
-		var entry SurferEntry
-		if err := rows.Scan(&entry.Timestamp, &entry.Count, &entry.WaterTemperature, &entry.AirTemperature, &entry.WeatherCondition); err != nil {
+		var timestamp time.Time
+		var count int
+		var waterTemp *float64
+		var airTemp *float64
+		var condition *string
+
+		if err := rows.Scan(&timestamp, &count, &waterTemp, &airTemp, &condition); err != nil {
 			return nil, err
 		}
 
+		entry := SurferEntryResponse{
+			Timestamp:        timestamp,
+			Count:            count,
+			WaterTemperature: safeFloat(waterTemp),
+			AirTemperature:   safeFloat(airTemp),
+			WeatherCondition: safeString(condition),
+		}
 		entries = append(entries, entry)
 	}
 	return entries, nil
+}
+
+type SurferEntryResponse struct {
+	Timestamp        time.Time `json:"timestamp"`
+	Count            int       `json:"count"`
+	WaterTemperature float64   `json:"water_temperature"`
+	AirTemperature   float64   `json:"air_temperature"`
+	WeatherCondition string    `json:"weather_condition"`
 }
