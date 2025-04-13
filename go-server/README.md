@@ -66,7 +66,9 @@ flyway.locations=filesystem:./db/migrations
 |`/api/surfers`|GET|Get all surfer entries|
 |`/api/surfers`|POST|Add new surfer entry|
 |`/api/surfers/predict`|GET|Predict surfer count|
-|`/api/temperature`|GET|Get latest temperature|
+|`/api/conditions/water-temperature`|GET|Get latest water temperature|
+|`/api/conditions/weather`|GET|Get latest weather conditions|
+
 
 ---
 

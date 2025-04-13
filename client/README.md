@@ -38,7 +38,7 @@ cd eisbachtracker-pwa/client
 Create a `.env` file at the root with:
 
 `VITE_PEGEL_API_URL`=https://api.pegelalarm.at/api/station/1.0/list?commonid=16515005-de&responseDetailLevel=high
-`VITE_BACKEND_API_URL`=http://localhost:8080/api/temperature
+`VITE_BACKEND_API_URL`=http://localhost:8080/api
 
 ### Run the app
 

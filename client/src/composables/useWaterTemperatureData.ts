@@ -34,7 +34,7 @@ export function useTemperature() {
     }, 3000)
 
     try {
-      const res = await axios.get(`${API_BASE_URL}/temperature`)
+      const res = await axios.get(`${API_BASE_URL}/conditions/water-temperature`)
       temperature.value = res.data.temperature
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to fetch temperature'
