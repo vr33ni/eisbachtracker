@@ -12,9 +12,10 @@
         <p class="text-lg text-gray-700 dark:text-gray-300">{{ waterLevelText }}</p>
         <p class="text-lg text-gray-700 dark:text-gray-300">{{ waterFlowText }}</p>
         <p class="text-lg text-gray-700 dark:text-gray-300">Current Water Temperature:</p>
-        <div v-if="isLoading">{{ loadingMessage }}</div>
-        <div v-else-if="error">❌ {{ error }}</div>
-        <div v-else>🌡️ {{ temperature }} °C</div>
+
+        <div v-if="waterTemperatureLoading">{{ loadingMessage }}</div>
+        <div v-else-if="waterTemperatureError">❌ {{ waterTemperatureError }}</div>
+        <div v-else>🌡️ {{ waterTemperature }} °C</div>
       </div>
 
       <!-- Alert -->
@@ -23,10 +24,11 @@
       </div>
 
       <!-- Button -->
-      <button @click="refreshEverything" :disabled="loading"
+      <button @click="refreshEverything" :disabled="waterTemperatureLoading || waterLevelLoading"
         class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg font-medium shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-        {{ loading ? 'Refreshing...' : 'Refresh Data' }}
+        {{ waterTemperatureLoading || waterLevelLoading ? 'Refreshing...' : 'Refresh Data' }}
       </button>
+
 
       <!-- Chart (moved inside box) -->
       <div class="pt-6">
@@ -48,7 +50,7 @@
           </button>
         </form>
 
-        <div v-if="surfersLoading">📡 Loading surfer data...</div>
+        <div v-if="isLoadingPrediction">📡 Loading surfer data...</div>
 
         <div v-else-if="surfersError" class="text-red-500">❌ {{ surfersError }}</div>
 
@@ -65,14 +67,14 @@
           <!-- Prediction -->
           <div class="mt-4 text-left">
             <h3 class="font-semibold text-blue-700 dark:text-blue-300">📊 Prediction</h3>
-            <p v-if="currentHourPrediction !== null">
-              Based on the last hour: <strong>{{ currentHourPrediction }}</strong> surfers
+
+            <p v-if="isLoadingPrediction">Loading prediction...</p>
+            <p v-else-if="currentHourPrediction !== null">
+              Predicted surfers: <strong>{{ currentHourPrediction }}</strong>
             </p>
             <p v-else class="text-gray-500">Not enough data to predict crowd</p>
           </div>
         </div>
-
-
       </div>
       <br>
     </div>
@@ -88,14 +90,25 @@ import { ref, onMounted, computed } from 'vue'
 import WaterChart from './components/WaterChart.vue'
 import { useTemperature } from '@/composables/useWaterTemperatureData'
 import { useSurferEntries } from '@/composables/useSurferEntries'
+import { useWaterLevelData } from '@/composables/useWaterLevelData'
 
-const chartLabels = ref<string[]>([])
-const chartValues = ref<number[]>([])
+const surferCountRaw = ref('')
+const currentHourPrediction = ref<number | null>(null)
+const isLoadingPrediction = ref(false)
 
-const waterLevelText = ref('Loading...')
-const waterFlowText = ref('Loading...')
-const showWaterLevelAlert = ref(false)
-const { temperature, loading, error, loadingMessage, fetchTemperature } = useTemperature()
+// const isLoading = computed(() =>
+//   waterTemperatureLoading.value || isLoadingPrediction.value || waterLevelLoading.value
+// )
+
+
+const {
+  waterTemperature,
+  ensureTemperature,
+  loading: waterTemperatureLoading,
+  error: waterTemperatureError,
+  loadingMessage,
+  fetchTemperature,
+} = useTemperature()
 
 const {
   entries: surferEntries,
@@ -106,9 +119,15 @@ const {
   error: surfersError,
 } = useSurferEntries()
 
-
-const currentHour = new Date().getHours()
-const predictedSurfers = ref<number | null>(null)
+const {
+  waterLevelText,
+  waterFlowText,
+  showWaterLevelAlert,
+  chartLabels,
+  chartValues,
+  fetchWaterData: fetchWaterLevelData,
+  loading: waterLevelLoading,
+} = useWaterLevelData()
 
 
 // 🔎 Entries from today
@@ -120,24 +139,28 @@ const todaysEntries = computed(() =>
   })
 )
 
-// 📊 Prediction from the past hour
-const currentHourPrediction = computed(() => {
-  const now = new Date()
-  const hourAgo = new Date(now.getTime() - 60 * 60 * 1000)
+const fetchPrediction = async () => {
+  isLoadingPrediction.value = true
+  try {
+    const now = new Date()
+    const hour = now.getHours()
 
-  const lastHourEntries = surferEntries.value.filter(entry => {
-    const time = new Date(entry.timestamp)
-    return time > hourAgo && time <= now
-  })
+    await ensureTemperature()
 
-  if (!lastHourEntries.length) return null
+    const prediction = await getPredictionForHour(hour)
+    if (prediction) {
+      currentHourPrediction.value = prediction.prediction
+      waterTemperature.value = prediction.water_temperature  // update local temp!
+    } else {
+      currentHourPrediction.value = null    }
+  } catch (err) {
+    console.error("Failed to fetch prediction", err)
+    currentHourPrediction.value = null
+  } finally {
+    isLoadingPrediction.value = false
+  }
+}
 
-  const avg = lastHourEntries.reduce((sum, e) => sum + e.count, 0) / lastHourEntries.length
-  return Math.round(avg)
-})
-
-
-const surferCountRaw = ref('')
 const surferCount = computed(() => Number(surferCountRaw.value))
 
 const onInputNumeric = (e: Event) => {
@@ -159,23 +182,19 @@ const submitSurferCount = async () => {
   }
 }
 
-const apiUrl = import.meta.env.VITE_PEGEL_API_URL
-
 onMounted(async () => {
-  fetchTemperature()
-  fetchEntries()
-  const temp = temperature.value // might be null
-  const prediction = await getPredictionForHour(currentHour, temp ?? undefined)
-  predictedSurfers.value = prediction
+  await fetchWaterLevelData()
+  await fetchEntries()
+  await fetchPrediction()
 })
 
+
 const refreshEverything = () => {
-  checkWaterLevel()
+  fetchWaterLevelData()
   fetchTemperature()
 }
 
 
-const isLoading = computed(() => temperature.value === null && !error.value)
 
 
 const notifyUser = (waterLevel: number) => {
@@ -196,51 +215,6 @@ const notifyUser = (waterLevel: number) => {
   }
 };
 
-
-const fetchWaterData = async () => {
-  try {
-    const response = await fetch(apiUrl)
-    const data = await response.json()
-
-    if (data?.payload?.stations?.length > 0) {
-      const station = data.payload.stations[0]
-      const waterLevel = station.data[0]?.value
-      const waterFlow = station.data[1]?.value
-
-      waterLevelText.value = `Current Water Level: ${waterLevel} cm`
-      waterFlowText.value = `Current Water Flow: ${waterFlow} m³/s`
-
-      if (waterLevel <= 140) {
-        showWaterLevelAlert.value = true
-        notifyUser(waterLevel)
-      } else {
-        showWaterLevelAlert.value = false
-      }
-
-      // ✅ Push to chart data
-      chartLabels.value.push(new Date().toLocaleTimeString())
-      chartValues.value.push(waterLevel)
-
-      // ✅ Optional: Keep it short
-      if (chartLabels.value.length > 10) chartLabels.value.shift()
-      if (chartValues.value.length > 10) chartValues.value.shift()
-
-    } else {
-      console.error('Stations data is missing or undefined')
-    }
-  } catch (error) {
-    console.error('Error fetching water level data:', error)
-  }
-}
-
-
-const checkWaterLevel = () => {
-  fetchWaterData()
-}
-
-
-
-fetchWaterData()
 </script>
 
 <style scoped>
