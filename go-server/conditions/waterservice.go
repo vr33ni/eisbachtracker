@@ -1,4 +1,4 @@
-package tempservice
+package conditions
 
 import (
 	"archive/zip"
@@ -21,7 +21,7 @@ func createHTTPClient() (*http.Client, error) {
 	return &http.Client{Jar: jar}, nil
 }
 
-func GetLatestTemperature() (float64, error) {
+func GetLatestWaterTemperature() (float64, error) {
 	client, err := createHTTPClient()
 	if err != nil {
 		return 0, fmt.Errorf("creating HTTP client: %w", err)
@@ -45,7 +45,7 @@ func GetLatestTemperature() (float64, error) {
 		return 0, fmt.Errorf("parsing CSV: %w", err)
 	}
 
-	return parseLatestTemperature(records)
+	return parseLatestWaterTemperature(records)
 }
 
 func requestDownloadToken(client *http.Client) (string, error) {
@@ -158,7 +158,7 @@ func extractCSV(zipPath string) ([][]string, error) {
 	return nil, fmt.Errorf("no valid CSV found")
 }
 
-func parseLatestTemperature(rows [][]string) (float64, error) {
+func parseLatestWaterTemperature(rows [][]string) (float64, error) {
 	if len(rows) < 2 {
 		return 0, fmt.Errorf("no data in CSV")
 	}

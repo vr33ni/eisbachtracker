@@ -115,6 +115,38 @@ If you add a new migration file (like `V3__add_column.sql`):
 Run locally:
 ```bash
 make migrate-prod
-````
+```
 
 (This applies migrations to Neon DB)
+
+---
+
+## Prediction logic
+
+        +--------------------+
+        | User submits count |
+        +--------------------+
+                    |
+                    v
+        +--------------------------+
+        | Fetch current conditions |
+        | - Air Temp (OpenWeather)|
+        | - Water Temp (API)      |
+        | - Weather Condition     |
+        +--------------------------+
+                    |
+                    v
+        +-----------------------------+
+        | Apply Prediction Factors    |
+        |-----------------------------|
+        | - Air Temp Weight           |
+        | - Water Temp Weight         |
+        | - Weather Condition Weight  |
+        | - Time of Day Boost         |
+        | - Weekend Boost             |
+        +-----------------------------+
+                    |
+                    v
+        +-------------------------+
+        | Final Surfer Prediction |
+        +-------------------------+

@@ -2,52 +2,61 @@ package surferdata
 
 import (
 	"context"
+	"math"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/vr33ni/eisbachtracker-pwa/go-server/conditions"
 )
 
-// PredictSurferCount returns an average surfer count for the given hour.
-// Optionally, filter by temperature range if provided.
-func (s *Service) PredictSurferCount(hour int, temperature *float64) (float64, error) {
-	var rows pgx.Rows
-	var err error
+type PredictionParams struct {
+	Hour             int
+	WaterTemp        *float64
+	AirTemp          *float64
+	WeatherCondition string
+}
 
-	if temperature != nil {
-		tempRangeMin := *temperature - 2
-		tempRangeMax := *temperature + 2
-		query := `
-			SELECT count FROM surfer_entries
-			WHERE EXTRACT(HOUR FROM timestamp) = $1
-			AND temperature BETWEEN $2 AND $3
-		`
-		rows, err = s.DB.Query(context.Background(), query, hour, tempRangeMin, tempRangeMax)
-	} else {
-		query := `
-			SELECT count FROM surfer_entries
-			WHERE EXTRACT(HOUR FROM timestamp) = $1
-		`
-		rows, err = s.DB.Query(context.Background(), query, hour)
-	}
+// BasePredictionByHour fetches avg surfer count from DB for given hour
+func (s *Service) basePredictionByHour(hour int) (float64, error) {
+	var avg *float64
+	err := s.DB.QueryRow(context.Background(),
+		`SELECT AVG(count) FROM surfer_entries WHERE EXTRACT(HOUR FROM timestamp) = $1`,
+		hour,
+	).Scan(&avg)
 
 	if err != nil {
 		return 0, err
 	}
-	defer rows.Close()
 
-	var total int
-	var count int
-	for rows.Next() {
-		var c int
-		if err := rows.Scan(&c); err != nil {
-			return 0, err
-		}
-		total += c
-		count++
+	if avg == nil {
+		return 0, nil
 	}
 
-	if count == 0 {
-		return 0, nil // instead of returning an error - return nil (no data for this hour)
+	return *avg, nil
+}
+
+func (s *Service) PredictSurferCountAdvanced(params PredictionParams) (int, error) {
+	base, err := s.basePredictionByHour(params.Hour)
+	if err != nil {
+		return 0, err
 	}
 
-	return float64(total) / float64(count), nil
+	weatherData := &conditions.WeatherData{
+		Temp:      safeFloat(params.AirTemp),
+		Condition: params.WeatherCondition,
+	}
+
+	factor := calculateFactor(params.Hour, params.WaterTemp, weatherData)
+
+	pred := int(math.Round(base * factor))
+	if pred < 0 {
+		pred = 0
+	}
+
+	return pred, nil
+}
+
+func safeFloat(f *float64) float64 {
+	if f == nil {
+		return 0
+	}
+	return *f
 }
