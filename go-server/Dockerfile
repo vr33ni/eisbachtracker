@@ -29,7 +29,7 @@ ENV PATH="/flyway:$PATH"
 
 # Copy app & config
 COPY --from=builder /app/main .
-COPY db/migrations ./db/migrations
+COPY db/migrations/ ./db/migrations/
 COPY flyway.prod.conf ./flyway.conf
 COPY config/predict.toml ./predict.toml
 
