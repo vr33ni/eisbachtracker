@@ -152,7 +152,8 @@ const fetchPrediction = async () => {
       currentHourPrediction.value = prediction.prediction
       waterTemperature.value = prediction.water_temperature  // update local temp!
     } else {
-      currentHourPrediction.value = null    }
+      currentHourPrediction.value = null
+    }
   } catch (err) {
     console.error("Failed to fetch prediction", err)
     currentHourPrediction.value = null
@@ -191,7 +192,9 @@ onMounted(async () => {
 
 const refreshEverything = () => {
   fetchWaterLevelData()
-  fetchTemperature()
+  fetchEntries()
+  fetchPrediction()
+
 }
 
 
