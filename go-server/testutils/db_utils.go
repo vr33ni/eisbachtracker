@@ -13,12 +13,5 @@ func SetupTestDB(t *testing.T) *pgxpool.Pool {
 		t.Fatalf("Failed to connect to DB: %v", err)
 	}
 
-	t.Cleanup(func() {
-		_, err := db.Exec(context.Background(), "DELETE FROM surfer_entries")
-		if err != nil {
-			t.Logf("Cleanup failed: %v", err)
-		}
-	})
-
 	return db
 }
