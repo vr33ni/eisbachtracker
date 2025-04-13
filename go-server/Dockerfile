@@ -27,16 +27,10 @@ RUN curl -L https://repo1.maven.org/maven2/org/flywaydb/flyway-commandline/11.7.
 
 ENV PATH="/flyway:$PATH"
 
-# Copy compiled Go binary from build stage
+# Copy app & config
 COPY --from=builder /app/main .
-
-# Copy only migration files
 COPY db/migrations ./db/migrations
-
-# Copy Flyway config for prod (url/user/pass via ENV vars)
 COPY flyway.prod.conf ./flyway.conf
-
-# Add this in final stage
 COPY config/predict.toml ./predict.toml
 
 # Expose port

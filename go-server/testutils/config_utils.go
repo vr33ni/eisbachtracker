@@ -8,24 +8,9 @@ import (
 )
 
 func LoadTestConfig(t *testing.T) {
-	pathsToTry := []string{
-		"./config/predict.toml",  // normal
-		"../config/predict.toml", // when running from subpackage
-	}
+	os.Setenv("PREDICT_CONFIG", "../config/predict.toml")
 
-	var loaded bool
-	for _, path := range pathsToTry {
-		if _, err := os.Stat(path); err == nil {
-			os.Setenv("PREDICT_CONFIG", path)
-			if err := config.LoadConfig(); err != nil {
-				t.Fatalf("Failed to load config: %v", err)
-			}
-			loaded = true
-			break
-		}
-	}
-
-	if !loaded {
-		t.Fatalf("Failed to find predict.toml in expected paths")
+	if err := config.LoadConfig(); err != nil {
+		t.Fatalf("Failed to load config: %v", err)
 	}
 }
