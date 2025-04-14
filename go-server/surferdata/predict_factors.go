@@ -1,43 +1,45 @@
 package surferdata
 
 import (
-	"log"
-
 	"github.com/vr33ni/eisbachtracker-pwa/go-server/conditions"
 	"github.com/vr33ni/eisbachtracker-pwa/go-server/config"
 )
 
 // calculateFactor applies all dynamic factors based on the current context
-func calculateFactor(hour int, waterTemp *float64, weatherData *conditions.WeatherData) float64 {
+func calculateFactor(hour int, waterTemp *float64, weatherData *conditions.WeatherData, waterLevel float64, waterFlow float64) float64 {
 	factor := 1.0
 
-	log.Printf("Hour Factor: %+v", config.Predict.HourFactor)
-	log.Printf("Water Temp Factor: %+v", config.Predict.WaterTempFactor)
-	log.Printf("Air Temp Factor: %+v", config.Predict.AirTempFactor)
-	log.Printf("Weather Condition Factor: %+v", config.Predict.WeatherConditionFactor)
-
-	// --- Hour Factor ---
-	if hour >= 18 || hour <= 8 {
-		factor *= config.Predict.HourFactor.Offpeak
-	} else {
-		factor *= config.Predict.HourFactor.Peak
+	// Time of day influence
+	if hour >= 6 && hour <= 8 {
+		factor += 0.3
+	} else if hour >= 12 && hour <= 14 {
+		factor += 0.2
+	} else if hour >= 22 || hour <= 5 {
+		factor -= 0.4
 	}
 
-	// --- Water Temp Factor ---
-	if waterTemp != nil {
-		factor *= waterTempFactor(*waterTemp)
+	// Water temperature influence
+	if waterTemp != nil && *waterTemp < 10 {
+		factor -= 0.2
 	}
 
-	// --- Air Temp Factor ---
-	if weatherData != nil {
-		factor *= airTempFactor(weatherData.Temp)
+	// Weather influence
+	if weatherData.Condition == "Rain" || weatherData.Condition == "Snow" {
+		factor -= 0.3
+	}
 
-		// --- Weather Condition Factor ---
-		if conditionFactor, ok := config.Predict.WeatherConditionFactor[weatherData.Condition]; ok {
-			factor *= conditionFactor
-		} else {
-			factor *= config.Predict.WeatherConditionFactor["Unknown"]
-		}
+	// Water level influence
+	if waterLevel < 140 {
+		factor -= 0.3
+	} else if waterLevel > 145 {
+		factor += 0.2
+	}
+
+	// Water flow -> ignored for now, but kept for future
+	_ = waterFlow // placeholder to avoid unused warning
+
+	if factor < 0.5 {
+		factor = 0.5
 	}
 
 	return factor

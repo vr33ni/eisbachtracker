@@ -3,16 +3,22 @@ package surferdata
 import (
 	"testing"
 
+	"github.com/vr33ni/eisbachtracker-pwa/go-server/conditions"
 	"github.com/vr33ni/eisbachtracker-pwa/go-server/testutils"
 	"github.com/vr33ni/eisbachtracker-pwa/go-server/utils"
-
-	"github.com/vr33ni/eisbachtracker-pwa/go-server/conditions"
 )
 
 func TestCalculateFactorSunnyWarmPeak(t *testing.T) {
 	testutils.LoadTestConfig(t)
 
-	f := calculateFactor(14, utils.Float64(20), &conditions.WeatherData{Temp: 25, Condition: "Clear"})
+	f := calculateFactor(
+		14,                // hour
+		utils.Float64(20), // water temp
+		&conditions.WeatherData{Temp: 25, Condition: "Clear"}, // weather
+		146, // water level
+		15,  // water flow (ignored for now)
+	)
+
 	t.Logf("factor: %.2f", f)
 
 	if f <= 1.0 {
@@ -23,8 +29,29 @@ func TestCalculateFactorSunnyWarmPeak(t *testing.T) {
 func TestCalculateFactorColdRainyOffpeak(t *testing.T) {
 	testutils.LoadTestConfig(t)
 
-	f := calculateFactor(6, utils.Float64(5), &conditions.WeatherData{Temp: 5, Condition: "Rain"})
+	f := calculateFactor(
+		6,                // hour
+		utils.Float64(5), // water temp
+		&conditions.WeatherData{Temp: 5, Condition: "Rain"}, // weather
+		135, // water level
+		10,  // water flow (ignored for now)
+	)
+
+	t.Logf("factor: %.2f", f)
+
 	if f >= 1.0 {
 		t.Error("Expected factor to decrease for cold rainy off-peak conditions")
+	}
+}
+
+func TestCalculateFactorLowWaterLevel(t *testing.T) {
+	testutils.LoadTestConfig(t)
+
+	f := calculateFactor(10, utils.Float64(15), &conditions.WeatherData{Temp: 15, Condition: "Clear"}, 135, 10)
+
+	t.Logf("factor: %.2f", f)
+
+	if f >= 1.0 {
+		t.Error("Expected factor to decrease for low water level")
 	}
 }

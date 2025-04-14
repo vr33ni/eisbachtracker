@@ -3,6 +3,8 @@ package conditions
 import (
 	"archive/zip"
 	"encoding/csv"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,6 +14,11 @@ import (
 	"strings"
 	"time"
 )
+
+type WaterConditions struct {
+	Level float64
+	Flow  float64
+}
 
 func createHTTPClient() (*http.Client, error) {
 	jar, err := cookiejar.New(nil)
@@ -167,4 +174,37 @@ func parseLatestWaterTemperature(rows [][]string) (float64, error) {
 	var temp float64
 	fmt.Sscanf(tempStr, "%f", &temp)
 	return temp, nil
+}
+
+func GetCurrentWaterConditions() (float64, float64, error) {
+	url := os.Getenv("PEGEL_ALARM_API_URL")
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer resp.Body.Close()
+
+	var data struct {
+		Payload struct {
+			Stations []struct {
+				Data []struct {
+					Value float64 `json:"value"`
+				} `json:"data"`
+			} `json:"stations"`
+		} `json:"payload"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return 0, 0, err
+	}
+
+	if len(data.Payload.Stations) == 0 || len(data.Payload.Stations[0].Data) < 2 {
+		return 0, 0, errors.New("invalid response structure")
+	}
+
+	level := data.Payload.Stations[0].Data[0].Value
+	flow := data.Payload.Stations[0].Data[1].Value
+
+	return level, flow, nil
 }

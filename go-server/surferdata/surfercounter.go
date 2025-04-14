@@ -17,6 +17,18 @@ type SurferEntry struct {
 	WaterTemperature *float64  `json:"water_temperature,omitempty"`
 	AirTemperature   *float64  `json:"air_temperature,omitempty"`
 	WeatherCondition *string   `json:"weather_condition,omitempty"`
+	WaterLevel       *float64  `json:"water_level,omitempty"`
+	WaterFlow        *float64  `json:"water_flow,omitempty"`
+}
+
+type SurferEntryResponse struct {
+	Timestamp        time.Time `json:"timestamp"`
+	Count            int       `json:"count"`
+	WaterTemperature float64   `json:"water_temperature"`
+	AirTemperature   float64   `json:"air_temperature"`
+	WeatherCondition string    `json:"weather_condition"`
+	WaterLevel       float64   `json:"water_level"`
+	WaterFlow        float64   `json:"water_flow"`
 }
 
 // Service handles database operations for surfer data.
@@ -50,17 +62,25 @@ func (s *Service) AddEntry(count int, when time.Time) error {
 		waterTemp = 0 // always store 0
 	}
 
+	waterLevel, waterFlow, err := conditions.GetCurrentWaterConditions()
+	if err != nil {
+		log.Println("⚠️ Could not fetch water level/flow:", err)
+		waterLevel = 0
+		waterFlow = 0
+	}
+
 	_, err = s.DB.Exec(context.Background(),
-		`INSERT INTO surfer_entries (timestamp, count, water_temperature, air_temperature, weather_condition) 
-	 VALUES ($1, $2, $3, $4, $5)`,
-		when, count, waterTemp, weather.Temp, weather.Condition)
+		`INSERT INTO surfer_entries (timestamp, count, water_temperature, air_temperature, weather_condition, water_level, water_flow) 
+		 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+		when, count, waterTemp, weather.Temp, weather.Condition, waterLevel, waterFlow,
+	)
 
 	return err
 }
 
 func (s *Service) GetAllEntries() ([]SurferEntryResponse, error) {
 	rows, err := s.DB.Query(context.Background(),
-		`SELECT timestamp, count, water_temperature, air_temperature, weather_condition FROM surfer_entries ORDER BY timestamp DESC`)
+		`SELECT timestamp, count, water_temperature, air_temperature, weather_condition, water_level, water_flow FROM surfer_entries ORDER BY timestamp DESC`)
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +93,9 @@ func (s *Service) GetAllEntries() ([]SurferEntryResponse, error) {
 		var waterTemp *float64
 		var airTemp *float64
 		var condition *string
-
-		if err := rows.Scan(&timestamp, &count, &waterTemp, &airTemp, &condition); err != nil {
+		var waterLevel *float64
+		var waterFlow *float64
+		if err := rows.Scan(&timestamp, &count, &waterTemp, &airTemp, &condition, &waterLevel, &waterFlow); err != nil {
 			return nil, err
 		}
 
@@ -84,16 +105,12 @@ func (s *Service) GetAllEntries() ([]SurferEntryResponse, error) {
 			WaterTemperature: safeFloat(waterTemp),
 			AirTemperature:   safeFloat(airTemp),
 			WeatherCondition: safeString(condition),
+			WaterLevel:       safeFloat(waterLevel),
+			WaterFlow:        safeFloat(waterFlow),
 		}
 		entries = append(entries, entry)
 	}
 	return entries, nil
 }
 
-type SurferEntryResponse struct {
-	Timestamp        time.Time `json:"timestamp"`
-	Count            int       `json:"count"`
-	WaterTemperature float64   `json:"water_temperature"`
-	AirTemperature   float64   `json:"air_temperature"`
-	WeatherCondition string    `json:"weather_condition"`
-}
+func GetCurrentWaterConditions() (level float64, flow float64, err error)
