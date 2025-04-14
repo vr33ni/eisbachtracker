@@ -13,7 +13,7 @@
         <WaterDataCard :water-level-text="waterLevelText" :water-flow-text="waterFlowText"
           :show-water-level-alert="showWaterLevelAlert" :water-temperature="waterTemperature"
           :water-temperature-loading="predictionLoading" :water-temperature-error="waterTemperatureError"
-          :chart-labels="chartLabels" :chart-values="chartValues" />
+          :chart-labels="chartLabels" :chart-values="chartValues" :cached-age-minutes="cachedAgeMinutes" />
 
 
       </div>
@@ -59,7 +59,7 @@ const surferCountRaw = ref('')
 const currentHourPrediction = ref<number | null>(null)
 const submitting = ref(false)
 
-const { waterTemperature, waterTemperatureLoading, waterTemperatureError } = useTemperature()
+const { waterTemperature, waterTemperatureLoading, waterTemperatureError, cachedAgeMinutes, ensureTemperature} = useTemperature()
 
 const {
   entriesLoading,
@@ -89,12 +89,16 @@ const isRefreshing = computed(() => waterTemperatureLoading.value || entriesLoad
 
 const fetchPrediction = async () => {
   try {
+    await ensureTemperature() // Will use cache or fetch if needed
+
     const now = new Date()
     const hour = now.getHours()
 
-    const prediction = await getPredictionForHour(hour)
+    const prediction = await getPredictionForHour(hour, waterTemperature.value || undefined)
+
     if (prediction) {
       currentHourPrediction.value = prediction.prediction
+      // Optionally update temp from prediction if backend returns something newer
       waterTemperature.value = prediction.water_temperature
     } else {
       currentHourPrediction.value = null
@@ -105,13 +109,9 @@ const fetchPrediction = async () => {
   }
 }
 
+
 const surferCount = computed(() => Number(surferCountRaw.value))
 
-const onInputNumeric = (e: Event) => {
-  const target = e.target as HTMLInputElement
-  target.value = target.value.replace(/[^0-9]/g, '')
-  surferCountRaw.value = target.value
-}
 
 const submitSurferCount = async () => {
   const count = surferCount.value
@@ -126,6 +126,7 @@ const submitSurferCount = async () => {
 
 
 const refreshEverything = async () => {
+  await ensureTemperature()     
   await fetchWaterData()
   await fetchEntries()
   await fetchPrediction()

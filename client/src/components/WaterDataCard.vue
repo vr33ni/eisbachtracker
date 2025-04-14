@@ -10,11 +10,17 @@
 
     <!-- Temperature -->
     <p class="text-md text-gray-700 dark:text-gray-300">
-      🌡️ Water Temperature:
-      <span v-if="waterTemperatureLoading" class="animate-pulse text-blue-600">Loading...</span>
-      <span v-else-if="waterTemperatureError" class="text-red-600">❌ {{ waterTemperatureError }}</span>
-      <span v-else>{{ waterTemperature }} °C</span>
-    </p>
+  🌡️ Water Temperature:
+  <span v-if="waterTemperatureLoading" class="animate-pulse text-blue-600">Loading...</span>
+  <span v-else-if="waterTemperatureError" class="text-red-600">❌ {{ waterTemperatureError }}</span>
+  <span v-else>
+    {{ waterTemperature }} °C
+    <span v-if="cachedAgeMinutes !== null && cachedAgeMinutes >= 0" class="text-xs text-gray-500 ml-2">
+      (cached {{ cachedAgeMinutes }} min ago)
+    </span>
+  </span>
+</p>
+
 
     <!-- Expandable Chart -->
     <ExpandableCard title="📈 Water Level History">
@@ -35,7 +41,9 @@ defineProps<{
   waterTemperature: number | null
   waterTemperatureLoading: boolean
   waterTemperatureError: string | null
+  cachedAgeMinutes: number | null
   chartLabels: string[]
   chartValues: number[]
 }>()
+
 </script>
