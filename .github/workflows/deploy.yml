@@ -4,8 +4,14 @@ on:
   push:
     branches:
       - master  
- 
 
+
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize 
+      
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
@@ -28,7 +34,7 @@ jobs:
         run: |
           cd client
           echo "VITE_BACKEND_API_URL=${{ secrets.VITE_BACKEND_API_URL }}" >> .env
-          echo "VITE_PEGEL_API_URL=${{ secrets.VITE_PEGEL_API_URL }}" >> .env
+          echo "VITE_PEGEL_ALARM_API_URL=${{ secrets.VITE_PEGEL_ALARM_API_URL }}" >> .env
           npm run build
 
       - name: Deploy to GitHub Pages

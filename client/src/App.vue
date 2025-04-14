@@ -2,40 +2,40 @@
   <div id="app"
     class="min-h-screen bg-gradient-to-b from-blue-100 to-white dark:from-gray-900 dark:to-gray-800 flex items-center justify-center px-4 py-10">
     <div class="w-full max-w-md space-y-8 text-center">
-      <!-- Title -->
+
       <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-blue-600 dark:text-blue-300">
         Eisbach Tracker
       </h1>
 
       <!-- Water Data -->
       <div class="space-y-2">
-        <p class="text-lg text-gray-700 dark:text-gray-300">{{ waterLevelText }}</p>
-        <p class="text-lg text-gray-700 dark:text-gray-300">{{ waterFlowText }}</p>
+        <div v-if="showWaterLevelAlert" class="text-red-600 text-sm font-semibold">
+          🚨 Low tide alert
+        </div>
+        <p class="text-lg text-gray-700 dark:text-gray-300">
+          🌊 Water Level: {{ waterLevelText }}
+        </p>
+
+        <p class="text-lg text-gray-700 dark:text-gray-300">
+          💧 Water Flow: {{ waterFlowText }}
+        </p>
+
         <p class="text-lg text-gray-700 dark:text-gray-300">Current Water Temperature:</p>
 
-        <div v-if="waterTemperatureLoading">{{ loadingMessage }}</div>
+        <div v-if="waterTemperatureLoading">{{ temperatureLoadingMessage }}</div>
         <div v-else-if="waterTemperatureError">❌ {{ waterTemperatureError }}</div>
         <div v-else>🌡️ {{ waterTemperature }} °C</div>
       </div>
 
-      <!-- Alert -->
-      <div v-if="showWaterLevelAlert" class="text-red-600 font-semibold text-base">
-        🚨 Water level exceeds threshold!
-      </div>
 
-      <!-- Button -->
-      <button @click="refreshEverything" :disabled="waterTemperatureLoading || waterLevelLoading"
+
+      <button @click="refreshEverything" :disabled="isRefreshing"
         class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg font-medium shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-        {{ waterTemperatureLoading || waterLevelLoading ? 'Refreshing...' : 'Refresh Data' }}
+        {{ isRefreshing ? 'Refreshing...' : 'Refresh Data' }}
       </button>
 
+      <WaterChart :labels="chartLabels" :values="chartValues" />
 
-      <!-- Chart (moved inside box) -->
-      <div class="pt-6">
-        <WaterChart :labels="chartLabels" :values="chartValues" />
-      </div>
-
-      <!-- Surfer Count Tracker -->
       <div class="space-y-4 pt-8 border-t border-gray-300 dark:border-gray-600 mt-6 text-left">
         <h2 class="text-2xl font-semibold text-blue-700 dark:text-blue-300">🧍 Surfer Spotter</h2>
 
@@ -43,20 +43,22 @@
           <input v-model="surferCountRaw" @input="onInputNumeric" type="text" placeholder="Number of surfers"
             inputmode="numeric" pattern="[0-9]*"
             class="px-3 py-2 rounded border dark:bg-gray-800 dark:border-gray-600" />
-
           <button type="submit" :disabled="submitting || surferCount === null"
-            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed">
-            Submit
+            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 justify-center min-w-[120px]">
+            <svg v-if="submitting" class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg"
+              fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+            <span>{{ submitting ? 'Submitting...' : 'Submit' }}</span>
           </button>
+
         </form>
 
-        <div v-if="isLoadingPrediction">📡 Loading surfer data...</div>
+        <div v-if="entriesLoading">{{ entriesLoadingMessage }}</div>
+        <div v-else-if="entriesError" class="text-red-500">❌ {{ entriesError }}</div>
 
-        <div v-else-if="surfersError" class="text-red-500">❌ {{ surfersError }}</div>
-
-        <!-- 👇 Updated part below -->
         <div v-else>
-          <!-- Today's Entries -->
           <ul v-if="todaysEntries.length" class="text-sm text-gray-700 dark:text-gray-300 space-y-1">
             <li v-for="entry in todaysEntries" :key="entry.timestamp">
               {{ new Date(entry.timestamp).toLocaleTimeString() }} — {{ entry.count }} surfers
@@ -64,26 +66,26 @@
           </ul>
           <p v-else class="text-gray-500 text-sm">No entries yet today</p>
 
-          <!-- Prediction -->
           <div class="mt-4 text-left">
             <h3 class="font-semibold text-blue-700 dark:text-blue-300">📊 Prediction</h3>
 
-            <p v-if="isLoadingPrediction">Loading prediction...</p>
-            <p v-else-if="currentHourPrediction !== null">
+            <div v-if="predictionLoading">{{ predictionLoadingMessage }}</div>
+            <div v-else-if="predictionError">❌ {{ predictionError }}</div>
+            <div v-else-if="currentHourPrediction !== null">
               Predicted surfers: <strong>{{ currentHourPrediction }}</strong>
-            </p>
-            <p v-else class="text-gray-500">Not enough data to predict crowd</p>
+            </div>
+            <div v-else class="text-gray-500">
+              Not enough data to predict crowd
+            </div>
           </div>
+          <br /> <br />
+
         </div>
       </div>
-      <br>
-    </div>
 
+    </div>
   </div>
 </template>
-
-
-
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
@@ -94,71 +96,34 @@ import { useWaterLevelData } from '@/composables/useWaterLevelData'
 
 const surferCountRaw = ref('')
 const currentHourPrediction = ref<number | null>(null)
-const isLoadingPrediction = ref(false)
+const submitting = ref(false)
 
-// const isLoading = computed(() =>
-//   waterTemperatureLoading.value || isLoadingPrediction.value || waterLevelLoading.value
-// )
+const { waterTemperature, ensureTemperature, loading: waterTemperatureLoading, error: waterTemperatureError, loadingMessage: temperatureLoadingMessage } = useTemperature()
+const { entries, addEntry, fetchEntries, getPredictionForHour, entriesLoading, errorEntries: entriesError, entriesLoadingMessage, predictionLoading, predictionError, predictionLoadingMessage } = useSurferEntries()
+const { waterLevelText, waterFlowText, showWaterLevelAlert, chartLabels, chartValues, fetchWaterData, loading: waterLevelLoading } = useWaterLevelData()
 
+const isRefreshing = computed(() => waterTemperatureLoading.value || entriesLoading.value || waterLevelLoading.value)
 
-const {
-  waterTemperature,
-  ensureTemperature,
-  loading: waterTemperatureLoading,
-  error: waterTemperatureError,
-  loadingMessage,
-  fetchTemperature,
-} = useTemperature()
-
-const {
-  entries: surferEntries,
-  addEntry,
-  fetchEntries,
-  getPredictionForHour,
-  loading: surfersLoading,
-  error: surfersError,
-} = useSurferEntries()
-
-const {
-  waterLevelText,
-  waterFlowText,
-  showWaterLevelAlert,
-  chartLabels,
-  chartValues,
-  fetchWaterData: fetchWaterLevelData,
-  loading: waterLevelLoading,
-} = useWaterLevelData()
-
-
-// 🔎 Entries from today
-const todaysEntries = computed(() =>
-  surferEntries.value.filter(entry => {
-    const date = new Date(entry.timestamp)
-    const today = new Date()
-    return date.toDateString() === today.toDateString()
-  })
-)
+const todaysEntries = computed(() => entries.value.filter(e => new Date(e.timestamp).toDateString() === new Date().toDateString()))
 
 const fetchPrediction = async () => {
-  isLoadingPrediction.value = true
   try {
     const now = new Date()
     const hour = now.getHours()
 
-    await ensureTemperature()
+    //await ensureTemperature() // still smart here!
 
     const prediction = await getPredictionForHour(hour)
+
     if (prediction) {
       currentHourPrediction.value = prediction.prediction
-      waterTemperature.value = prediction.water_temperature  // update local temp!
+      waterTemperature.value = prediction.water_temperature // optionally update cached temp
     } else {
       currentHourPrediction.value = null
     }
   } catch (err) {
-    console.error("Failed to fetch prediction", err)
+    console.error('Failed to fetch prediction', err)
     currentHourPrediction.value = null
-  } finally {
-    isLoadingPrediction.value = false
   }
 }
 
@@ -166,11 +131,9 @@ const surferCount = computed(() => Number(surferCountRaw.value))
 
 const onInputNumeric = (e: Event) => {
   const target = e.target as HTMLInputElement
-  target.value = target.value.replace(/[^0-9]/g, '') // Only keep digits
+  target.value = target.value.replace(/[^0-9]/g, '')
   surferCountRaw.value = target.value
 }
-const submitting = ref(false)
-
 
 const submitSurferCount = async () => {
   const count = surferCount.value
@@ -183,22 +146,13 @@ const submitSurferCount = async () => {
   }
 }
 
-onMounted(async () => {
-  await fetchWaterLevelData()
+const refreshEverything = async () => {
+  await fetchWaterData()
   await fetchEntries()
   await fetchPrediction()
-})
-
-
-const refreshEverything = () => {
-  fetchWaterLevelData()
-  fetchEntries()
-  fetchPrediction()
-
 }
 
-
-
+onMounted(refreshEverything)
 
 const notifyUser = (waterLevel: number) => {
   if ("Notification" in window) {

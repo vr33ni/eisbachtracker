@@ -37,7 +37,7 @@ cd eisbachtracker-pwa/client
 
 Create a `.env` file at the root with:
 
-`VITE_PEGEL_API_URL`=https://api.pegelalarm.at/api/station/1.0/list?commonid=16515005-de&responseDetailLevel=high
+`VITE_PEGEL_ALARM_API_URL`=https://api.pegelalarm.at/api/station/1.0/list?commonid=16515005-de&responseDetailLevel=high
 `VITE_BACKEND_API_URL`=http://localhost:8080/api
 
 ### Run the app
@@ -86,7 +86,7 @@ Uses GitHub Actions + [`peaceiris/actions-gh-pages`](https://github.com/peaceiri
 
 Go to **Settings > Secrets > Actions** and add:
 
-- `VITE_BACKEND_API_URL` / `VITE_PEGEL_API_URL`: same API URLs as above
+- `VITE_BACKEND_API_URL` / `VITE_PEGEL_ALARM_API_URL`: same API URLs as above
 
 Update `vite.config.ts`:
 
