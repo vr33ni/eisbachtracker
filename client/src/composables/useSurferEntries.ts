@@ -1,7 +1,8 @@
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import axios from 'axios'
 import type { SurferEntryDto } from '@/dto/surfer-entry.dto'
 import type { PredictionResponseDto } from '@/dto/prediction-response.dto'
+import { useLoadingMessages } from './useLoadingMessages'
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL
 
@@ -23,10 +24,13 @@ export function useSurferEntries() {
 
   const predictionLoading = ref(false)
   const predictionError = ref<string | null>(null)
-  const predictionLoadingMessage = ref(predictionMessages[0])
-  let interval: ReturnType<typeof setInterval> | null = null
 
- 
+  const {
+    loadingMessage: predictionLoadingMessage,
+    startRotating: startPredictionMessages,
+    stopRotating: stopPredictionMessages,
+  } = useLoadingMessages(predictionMessages)
+
   const fetchEntries = async () => {
     entriesLoading.value = true
     errorEntries.value = null
@@ -60,12 +64,7 @@ export function useSurferEntries() {
   const getPredictionForHour = async (hour: number, waterTemperature?: number) => {
     predictionLoading.value = true
     predictionError.value = null
-
-    let i = 0
-    interval = setInterval(() => {
-      predictionLoadingMessage.value = predictionMessages[i % predictionMessages.length]
-      i++
-    }, 2500)
+    startPredictionMessages()
 
     try {
       const url = new URL(`${API_BASE_URL}/surfers/predict`)
@@ -81,9 +80,19 @@ export function useSurferEntries() {
       return null
     } finally {
       predictionLoading.value = false
-      if (interval) clearInterval(interval)
+      stopPredictionMessages()
     }
   }
+
+  // 👇 NEW computed: Entries from today
+  const todaysEntries = computed(() =>
+    entries.value.filter(e => new Date(e.timestamp).toDateString() === new Date().toDateString())
+  )
+
+  // 👇 NEW computed: Entries from previous days
+  const historyEntries = computed(() =>
+    entries.value.filter(e => new Date(e.timestamp).toDateString() !== new Date().toDateString())
+  )
 
   return {
     entries,
@@ -96,5 +105,7 @@ export function useSurferEntries() {
     predictionLoading,
     predictionError,
     predictionLoadingMessage,
-   }
+    todaysEntries,
+    historyEntries, // new
+  }
 }

@@ -1,69 +1,64 @@
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import axios from 'axios'
 import type { WaterTemperatureDto } from '@/dto/water-temperature.dto'
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL
-
-const messages = [
-  '🌐 Contacting the Bavarian Water Lords...',
-  '📡 Negotiating cookie treaties...',
-  '📬 Enqueueing top-secret data packet...',
-  '🔄 Waiting for temperature to be deemed worthy...',
-  '📦 Unzipping meteorological mysteries...',
-  '📊 Decoding aquatic runes...',
-  '🌡️ Extracting the sacred temperature...',
-  '🧊 Counting water molecules...',
-  '🐟 Interviewing local fish...',
-]
-
-let fetchedOnce = false
-let interval: ReturnType<typeof setInterval> | null = null
+const STORAGE_KEY = 'cachedWaterTemperature'
 
 export function useTemperature() {
   const waterTemperature = ref<number | null>(null)
-  const loading = ref(false)
-  const error = ref<string | null>(null)
-  const loadingMessage = ref(messages[0])
+  const waterTemperatureLoading = ref(false)
+  const waterTemperatureError = ref<string | null>(null)
+  const cacheTimestamp = ref<number | null>(null)
+
+  const cachedAgeMinutes = computed(() => {
+    if (!cacheTimestamp.value) return null
+    return Math.floor((Date.now() - cacheTimestamp.value) / 60000)
+  })
 
   const fetchTemperature = async () => {
-    if (fetchedOnce) return
-    fetchedOnce = true
-
-    loading.value = true
-    error.value = null
-    waterTemperature.value = null
-
-    // 🔁 Rotate loading message
-    let i = 0
-    interval = setInterval(() => {
-      loadingMessage.value = messages[i % messages.length]
-      i++
-    }, 2500)
-
+    const cached = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null')
+  
+    if (cached && Date.now() - cached.timestamp < 1000 * 60 * 60) {
+      waterTemperature.value = cached.temperature
+      cacheTimestamp.value = cached.timestamp
+      return
+    }
+  
+    waterTemperatureLoading.value = true
+    waterTemperatureError.value = null
+  
     try {
       const res = await axios.get(`${API_BASE_URL}/conditions/water-temperature`)
       const data: WaterTemperatureDto = res.data
       waterTemperature.value = data.water_temperature
+      cacheTimestamp.value = Date.now()
+  
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        temperature: data.water_temperature,
+        timestamp: cacheTimestamp.value,
+      }))
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to fetch temperature'
+      waterTemperatureError.value = err instanceof Error ? err.message : 'Failed to fetch temperature'
     } finally {
-      loading.value = false
-      if (interval) clearInterval(interval)
+      waterTemperatureLoading.value = false
     }
   }
+  
 
-  async function ensureTemperature() {
+  const ensureTemperature = async () => {
     if (waterTemperature.value === null) {
       await fetchTemperature()
     }
   }
+  
 
   return {
     waterTemperature,
-    loading,
-    error,
-    loadingMessage,
+    waterTemperatureLoading,
+    waterTemperatureError,
     fetchTemperature,
     ensureTemperature,
+    cachedAgeMinutes, 
   }
 }

@@ -133,7 +133,7 @@ func handleSurferEntries(service *surferdata.Service) http.HandlerFunc {
 				http.Error(w, "Invalid input", http.StatusBadRequest)
 				return
 			}
-			if input.Count <= 0 {
+			if input.Count < 0 {
 				http.Error(w, "Surfer count must be positive", http.StatusBadRequest)
 				return
 			}
