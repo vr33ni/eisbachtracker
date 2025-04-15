@@ -125,6 +125,8 @@ make migrate-prod
 
 ## Prediction logic
 
+### Prediction logic diagram - flow
+
         +--------------------+
         | User submits count |
         +--------------------+
@@ -152,3 +154,34 @@ make migrate-prod
         +-------------------------+
         | Final Surfer Prediction |
         +-------------------------+
+
+### Prediction logic diagram - weighting of factors
+ 
+          | Current Time     |  ---> hour = now.getHours()
+          +------------------+
+                      |
+                      v
+          +---------------------------+
+          | basePredictionByHour(hour)| ← pulls historical avg from DB
+          |     e.g. hour 6 = 4.2     |
+          +---------------------------+
+                      |
+                      v
+      +----------------------------------------------+
+      | calculateFactor(hour, temp, weather, level)  |
+      |                                              |
+      | 🕒 Time of Day      → modifies + / -         |
+      | ❄️ Water Temp       → modifies + / -         |
+      | 🌧️ Weather           → modifies -             |
+      | 🌊 Water Level       → modifies + / -         |
+      +----------------------------------------------+
+                      |
+                      v
+          +-----------------------------+
+          | Prediction = base * factor  |
+          | e.g. 4.2 * 0.8 = 3.36 → 3   |
+          +-----------------------------+
+                      |
+                      v
+               🎯 Final Prediction
+

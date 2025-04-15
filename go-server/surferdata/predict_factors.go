@@ -20,7 +20,7 @@ func calculateFactor(
 	} else if hour >= 12 && hour <= 14 {
 		factor += 0.2 // Lunchtime bump
 	} else if hour >= 22 || hour <= 5 {
-		factor -= 0.4 // Night time drop
+		factor -= 0.8 // Night time drop
 	}
 
 	// ❄️ Water temperature influence
