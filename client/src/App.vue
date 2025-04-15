@@ -117,7 +117,7 @@ const submitSurferCount = async () => {
   const count = surferCount.value
   if (!isNaN(count) && count >= 0) {
     submitting.value = true
-    await addEntry(count)
+    await addEntry(count, undefined, Number(waterLevelText.value.replace(' cm', '')), Number(waterFlowText.value.replace(' m³/s', '')))
     await fetchEntries()
     surferCountRaw.value = ''
     submitting.value = false

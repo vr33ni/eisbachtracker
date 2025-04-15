@@ -11,20 +11,22 @@ import (
 	"github.com/vr33ni/eisbachtracker-pwa/go-server/config"
 	"github.com/vr33ni/eisbachtracker-pwa/go-server/db"
 	"github.com/vr33ni/eisbachtracker-pwa/go-server/routes"
-	"github.com/vr33ni/eisbachtracker-pwa/go-server/surferdata"
 )
 
 func main() {
+	// Load global config
 	if err := config.LoadConfig(); err != nil {
 		log.Fatal("Failed to load config:", err)
 	}
 
+	// Load .env if not in production
 	if os.Getenv("ENV") != "production" {
 		if err := godotenv.Load(); err == nil {
 			log.Println("✅ Loaded local .env")
 		}
 	}
 
+	// Init DB
 	if err := db.Init(); err != nil {
 		log.Fatal(err)
 	}
@@ -32,12 +34,10 @@ func main() {
 
 	fmt.Println("🌍 DATABASE_URL:", os.Getenv("DATABASE_URL"))
 
-	surferService := surferdata.NewService(db.Conn)
+	// Register Routes (with db pool)
+	routes.RegisterRoutes(db.Conn)
 
-	// Register Routes
-	routes.RegisterRoutes(surferService)
-
-	// Run Migrations locally only
+	// Run migrations if not in production
 	if os.Getenv("ENV") != "production" {
 		runMigrations()
 	}
@@ -51,5 +51,5 @@ func runMigrations() {
 	if err := cmd.Run(); err != nil {
 		log.Fatalf("Failed to execute Flyway migrations: %v", err)
 	}
-	log.Println("Database migrations applied successfully.")
+	log.Println("✅ Database migrations applied successfully.")
 }

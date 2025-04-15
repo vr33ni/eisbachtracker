@@ -3,12 +3,18 @@ package surferdata
 import (
 	"testing"
 	"time"
+
+	"github.com/vr33ni/eisbachtracker-pwa/go-server/conditions"
 )
 
 func TestAddAndGetEntries(t *testing.T) {
 	service := setupTestService(t)
 
-	err := service.AddEntry(5, time.Now())
+	mockWS := &conditions.MockWaterService{}
+
+	service.WaterService = mockWS
+
+	err := service.AddEntry(5, time.Now(), nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to add entry: %v", err)
 	}
@@ -22,5 +28,5 @@ func TestAddAndGetEntries(t *testing.T) {
 		t.Fatal("Expected at least one entry")
 	}
 
-	t.Logf("Fetched entries: %+v", entries[0])
+	t.Logf("Fetched entry: %+v", entries[0])
 }

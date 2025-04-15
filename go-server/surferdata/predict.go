@@ -28,8 +28,13 @@ func (s *Service) basePredictionByHour(hour int) (float64, error) {
 		return 0, err
 	}
 
-	if avg == nil {
-		return 0, nil
+	// fallback logic for weird hours (no data or tiny value)
+	if avg == nil || *avg < 1 {
+		// night hours fallback (basically no one)
+		if hour >= 22 || hour <= 5 {
+			return 0.3, nil // super low base
+		}
+		return 1, nil // minimal base for daytime
 	}
 
 	return *avg, nil

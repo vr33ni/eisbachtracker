@@ -11,7 +11,7 @@ var (
 	lastFetched   time.Time
 )
 
-// GetCachedWaterTemperature returns cached temp if recent, else fetches
+// GetCachedWaterTemperature returns the latest cached temperature, or fetches a new one
 func GetCachedWaterTemperature() (float64, error) {
 	cacheLock.Lock()
 	defer cacheLock.Unlock()
@@ -20,7 +20,8 @@ func GetCachedWaterTemperature() (float64, error) {
 		return *lastWaterTemp, nil
 	}
 
-	temp, err := GetLatestWaterTemperature()
+	ws := NewWaterService()
+	temp, err := ws.GetLatestWaterTemperature()
 	if err != nil {
 		if lastWaterTemp != nil {
 			// fallback to last known value
