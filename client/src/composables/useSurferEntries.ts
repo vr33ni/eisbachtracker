@@ -3,6 +3,7 @@ import axios from 'axios'
 import type { SurferEntryDto } from '@/dto/surfer-entry.dto'
 import type { PredictionResponseDto } from '@/dto/prediction-response.dto'
 import { useLoadingMessages } from './useLoadingMessages'
+import { useWaterLevelData } from './useWaterLevelData'
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL
 
@@ -18,7 +19,6 @@ const predictionMessages = [
 
 export function useSurferEntries() {
   const entries = ref<SurferEntryDto[]>([])
-
   const entriesLoading = ref(false)
   const errorEntries = ref<string | null>(null)
 
@@ -31,10 +31,11 @@ export function useSurferEntries() {
     stopRotating: stopPredictionMessages,
   } = useLoadingMessages(predictionMessages)
 
+  const { currentValues, currentFlows } = useWaterLevelData()
+
   const fetchEntries = async () => {
     entriesLoading.value = true
     errorEntries.value = null
-
     try {
       const res = await axios.get(`${API_BASE_URL}/surfers`)
       entries.value = res.data
@@ -45,26 +46,33 @@ export function useSurferEntries() {
     }
   }
 
-  const addEntry = async (count: number, time?: string, waterLevel?: number, waterFlow?: number) => {
+  const addEntry = async (
+    count: number,
+    time?: string,
+    waterLevel?: number,
+    waterFlow?: number,
+    waterTemperature?: number,
+  ) => {
     try {
       const body: any = {
         count,
         timestamp: time || new Date().toISOString(),
+        water_level: waterLevel ?? currentValues.value[currentValues.value.length - 1], // fallback to latest
+        water_flow: waterFlow ?? currentFlows.value[currentFlows.value.length - 1],    // fallback to latest
       }
-  
-      if (waterLevel !== undefined) body.water_level = waterLevel
-      if (waterFlow !== undefined) body.water_flow = waterFlow
-  
+
+      if (waterTemperature !== undefined) body.water_temperature = waterTemperature
+
       const res = await axios.post(`${API_BASE_URL}/surfers`, body)
-  
+
       if (!res.status.toString().startsWith('2')) throw new Error('Failed to add entry')
-  
+
       await fetchEntries()
     } catch (err) {
       errorEntries.value = err instanceof Error ? err.message : 'Failed to submit entry'
     }
   }
-  
+
   const getPredictionForHour = async (hour: number, waterTemperature?: number) => {
     predictionLoading.value = true
     predictionError.value = null
@@ -88,14 +96,12 @@ export function useSurferEntries() {
     }
   }
 
-  // 👇 NEW computed: Entries from today
   const todaysEntries = computed(() =>
-    entries.value.filter(e => new Date(e.timestamp).toDateString() === new Date().toDateString())
+    entries.value.filter((e) => new Date(e.timestamp).toDateString() === new Date().toDateString()),
   )
 
-  // 👇 NEW computed: Entries from previous days
   const historyEntries = computed(() =>
-    entries.value.filter(e => new Date(e.timestamp).toDateString() !== new Date().toDateString())
+    entries.value.filter((e) => new Date(e.timestamp).toDateString() !== new Date().toDateString()),
   )
 
   return {
@@ -110,6 +116,6 @@ export function useSurferEntries() {
     predictionError,
     predictionLoadingMessage,
     todaysEntries,
-    historyEntries, // new
+    historyEntries,
   }
 }

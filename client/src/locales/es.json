@@ -1,0 +1,14 @@
+{
+    "title": "Rastreador de Eisbach",
+    "surferSpotter": "Contador de Surfistas",
+    "refresh": "Actualizar Datos",
+    "submit": "Enviar",
+    "lowTideAlert": "Alerta de marea baja",
+    "waterLevel": "Nivel del agua",
+    "waterFlow": "Flujo de agua",
+    "waterTemp": "Temperatura del agua",
+    "loading": "Cargando...",
+    "cachedAgo": "en caché hace {minutes} min",
+    "waterChartTitle": "Historial del nivel de agua"
+  }
+  

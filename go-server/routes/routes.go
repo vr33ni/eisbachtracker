@@ -76,11 +76,12 @@ func handlePrediction(service *surferdata.Service, waterService conditions.Water
 
 		var waterTemp, airTemp *float64
 
+		// ✅ Use cached water temp
 		if waterTempStr != "" {
 			if t, err := strconv.ParseFloat(waterTempStr, 64); err == nil {
 				waterTemp = &t
 			}
-		} else if latest, err := waterService.GetLatestWaterTemperature(); err == nil {
+		} else if latest, err := waterService.GetCachedWaterTemperature(); err == nil {
 			waterTemp = &latest
 		}
 
@@ -134,6 +135,7 @@ func handleSurferEntries(service *surferdata.Service) http.HandlerFunc {
 				Time       time.Time `json:"timestamp"` // optional
 				WaterLevel *float64  `json:"water_level,omitempty"`
 				WaterFlow  *float64  `json:"water_flow,omitempty"`
+				WaterTemp  *float64  `json:"water_temperature,omitempty"`
 			}
 
 			if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -145,7 +147,7 @@ func handleSurferEntries(service *surferdata.Service) http.HandlerFunc {
 				return
 			}
 
-			if err := service.AddEntry(input.Count, input.Time, input.WaterLevel, input.WaterFlow); err != nil {
+			if err := service.AddEntry(input.Count, input.Time, input.WaterLevel, input.WaterFlow, input.WaterTemp); err != nil {
 				log.Printf("Failed to add entry: %v", err)
 				http.Error(w, "Failed to save entry", http.StatusInternalServerError)
 				return

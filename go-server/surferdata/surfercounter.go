@@ -38,7 +38,7 @@ func NewService(db *pgxpool.Pool, ws *conditions.WaterService) *Service {
 	return &Service{DB: db, WaterService: ws}
 }
 
-func (s *Service) AddEntry(count int, when time.Time, waterLevel *float64, waterFlow *float64) error {
+func (s *Service) AddEntry(count int, when time.Time, waterLevel *float64, waterFlow *float64, waterTempOptional *float64) error {
 	if when.IsZero() {
 		when = time.Now()
 	}
@@ -49,20 +49,31 @@ func (s *Service) AddEntry(count int, when time.Time, waterLevel *float64, water
 		weather = &conditions.WeatherData{Temp: 0, Condition: "Unknown"}
 	}
 
-	waterTemp, err := conditions.GetCachedWaterTemperature()
-	if err != nil {
-		log.Println("⚠️ Could not fetch water temp:", err)
-		waterTemp = 0
+	var waterTemp float64
+	if waterTempOptional != nil {
+		waterTemp = *waterTempOptional
+	} else {
+		waterTemp, err = s.WaterService.GetCachedWaterTemperature()
+		if err != nil {
+			log.Println("⚠️ Could not fetch water temp:", err)
+			waterTemp = 0
+		}
 	}
 
+	// Prefer frontend-provided water level & flow
 	if waterLevel == nil || waterFlow == nil {
+		log.Println("⚠️ No water level or flow provided from frontend, fetching from backend...")
 		wl, wf, err := s.WaterService.GetCurrentWaterConditions()
 		if err != nil {
-			log.Println("⚠️ Could not fetch water level/flow:", err)
+			log.Println("⚠️ Could not fetch water level/flow from backend:", err)
 			wl, wf = 0, 0
 		}
-		waterLevel = &wl
-		waterFlow = &wf
+		if waterLevel == nil {
+			waterLevel = &wl
+		}
+		if waterFlow == nil {
+			waterFlow = &wf
+		}
 	}
 
 	_, err = s.DB.Exec(context.Background(),
