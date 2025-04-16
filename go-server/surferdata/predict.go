@@ -12,6 +12,8 @@ type PredictionParams struct {
 	WaterTemp        *float64
 	AirTemp          *float64
 	WeatherCondition string
+	WaterLevel       float64
+	WaterFlow        float64
 }
 
 // BasePredictionByHour fetches avg surfer count from DB for given hour
@@ -26,8 +28,13 @@ func (s *Service) basePredictionByHour(hour int) (float64, error) {
 		return 0, err
 	}
 
-	if avg == nil {
-		return 0, nil
+	// fallback logic for weird hours (no data or tiny value)
+	if avg == nil || *avg < 1 {
+		// night hours fallback (basically no one)
+		if hour >= 22 || hour <= 5 {
+			return 0, nil // super low base
+		}
+		return 1, nil // minimal base for daytime
 	}
 
 	return *avg, nil
@@ -44,7 +51,7 @@ func (s *Service) PredictSurferCountAdvanced(params PredictionParams) (int, erro
 		Condition: params.WeatherCondition,
 	}
 
-	factor := calculateFactor(params.Hour, params.WaterTemp, weatherData)
+	factor := calculateFactor(params.Hour, params.WaterTemp, weatherData, params.WaterLevel, params.WaterFlow)
 
 	pred := int(math.Round(base * factor))
 	if pred < 0 {

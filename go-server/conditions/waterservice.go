@@ -3,6 +3,8 @@ package conditions
 import (
 	"archive/zip"
 	"encoding/csv"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -13,15 +15,68 @@ import (
 	"time"
 )
 
-func createHTTPClient() (*http.Client, error) {
-	jar, err := cookiejar.New(nil)
-	if err != nil {
-		return nil, err
-	}
-	return &http.Client{Jar: jar}, nil
+type WaterService struct{}
+
+func NewWaterService() *WaterService {
+	return &WaterService{}
 }
 
-func GetLatestWaterTemperature() (float64, error) {
+type WaterConditions struct {
+	Level float64
+	Flow  float64
+}
+
+type WaterDataProvider interface {
+	GetCurrentWeather() (*WeatherData, error)
+	GetCachedWaterTemperature() (float64, error)
+	GetLatestWaterTemperature() (float64, error) // <-- Add this line
+	GetCurrentWaterConditions() (float64, float64, error)
+}
+
+func (ws *WaterService) GetCurrentWeather() (*WeatherData, error) {
+	return GetCurrentWeather()
+}
+
+func (ws *WaterService) GetCachedWaterTemperature() (float64, error) {
+	return GetCachedWaterTemperature()
+}
+
+func (ws *WaterService) GetCurrentWaterConditions() (float64, float64, error) {
+	url := os.Getenv("PEGEL_ALARM_API_URL")
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return 0, 0, err
+	}
+	defer resp.Body.Close()
+
+	var data struct {
+		Payload struct {
+			Stations []struct {
+				Data []struct {
+					Value float64 `json:"value"`
+				} `json:"data"`
+			} `json:"stations"`
+		} `json:"payload"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return 0, 0, err
+	}
+
+	if len(data.Payload.Stations) == 0 || len(data.Payload.Stations[0].Data) < 2 {
+		return 0, 0, errors.New("invalid response structure")
+	}
+
+	level := data.Payload.Stations[0].Data[0].Value
+	flow := data.Payload.Stations[0].Data[1].Value
+
+	return level, flow, nil
+}
+
+// --- Public Fetching Method ---
+
+func (ws *WaterService) GetLatestWaterTemperature() (float64, error) {
 	client, err := createHTTPClient()
 	if err != nil {
 		return 0, fmt.Errorf("creating HTTP client: %w", err)
@@ -48,9 +103,20 @@ func GetLatestWaterTemperature() (float64, error) {
 	return parseLatestWaterTemperature(records)
 }
 
+// --- Internal Helpers ---
+
+func createHTTPClient() (*http.Client, error) {
+	jar, err := cookiejar.New(nil)
+	if err != nil {
+		return nil, err
+	}
+	return &http.Client{Jar: jar}, nil
+}
+
 func requestDownloadToken(client *http.Client) (string, error) {
 	page := "https://www.gkd.bayern.de/de/fluesse/wassertemperatur/kelheim/muenchen-himmelreichbruecke-16515005/download"
 
+	// Load page first (important for cookies/session)
 	_, err := client.Get(page)
 	if err != nil {
 		return "", err
@@ -96,6 +162,7 @@ func requestDownloadToken(client *http.Client) (string, error) {
 	if tokenEnd == -1 {
 		tokenEnd = len(tokenRaw)
 	}
+
 	return strings.TrimSuffix(strings.TrimSpace(tokenRaw[:tokenEnd]), `\`), nil
 }
 

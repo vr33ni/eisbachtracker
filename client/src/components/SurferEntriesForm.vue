@@ -1,6 +1,6 @@
 <template>
-  <form @submit.prevent="onSubmit" class="flex items-center gap-2">
-    <input
+<form @submit.prevent="onSubmit" class="flex flex-col sm:flex-row items-stretch gap-2 w-full">
+  <input
       v-model="countRaw"
       @input="onInputNumeric"
       type="text"

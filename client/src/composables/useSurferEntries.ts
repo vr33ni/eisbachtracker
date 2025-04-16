@@ -45,22 +45,26 @@ export function useSurferEntries() {
     }
   }
 
-  const addEntry = async (count: number, time?: string) => {
+  const addEntry = async (count: number, time?: string, waterLevel?: number, waterFlow?: number) => {
     try {
-      const body = {
+      const body: any = {
         count,
         timestamp: time || new Date().toISOString(),
       }
-
+  
+      if (waterLevel !== undefined) body.water_level = waterLevel
+      if (waterFlow !== undefined) body.water_flow = waterFlow
+  
       const res = await axios.post(`${API_BASE_URL}/surfers`, body)
+  
       if (!res.status.toString().startsWith('2')) throw new Error('Failed to add entry')
-
+  
       await fetchEntries()
     } catch (err) {
       errorEntries.value = err instanceof Error ? err.message : 'Failed to submit entry'
     }
   }
-
+  
   const getPredictionForHour = async (hour: number, waterTemperature?: number) => {
     predictionLoading.value = true
     predictionError.value = null

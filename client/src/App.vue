@@ -1,7 +1,8 @@
 <template>
-  <div id="app"
-    class="min-h-screen bg-gradient-to-b from-blue-100 to-white dark:from-gray-900 dark:to-gray-800 px-4 py-10">
-    <div class="max-w-2xl mx-auto space-y-6">
+<div id="app"
+  class="min-h-screen bg-gradient-to-b from-blue-100 to-white dark:from-gray-900 dark:to-gray-800 px-0 sm:px-4 py-6 sm:py-10">
+
+  <div class="w-full max-w-2xl sm:mx-auto space-y-6">
 
       <!-- Header -->
       <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-blue-600 dark:text-blue-300 text-center">
@@ -9,7 +10,7 @@
       </h1>
 
       <!-- Water Data Card -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
         <WaterDataCard :water-level-text="waterLevelText" :water-flow-text="waterFlowText"
           :show-water-level-alert="showWaterLevelAlert" :water-temperature="waterTemperature"
           :water-temperature-loading="predictionLoading" :water-temperature-error="waterTemperatureError"
@@ -19,7 +20,7 @@
       </div>
 
       <!-- Surfer Spotter Card -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 space-y-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6 space-y-4">
         <h2 class="text-2xl font-semibold text-blue-700 dark:text-blue-300">🧍 Surfer Spotter</h2>
 
         <SurferPrediction :predictionLoading="predictionLoading" :predictionError="predictionError"
@@ -33,11 +34,12 @@
 
       <!-- Refresh Button -->
       <div class="flex justify-center">
-        <button @click="refreshEverything" :disabled="isRefreshing"
-          class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg font-medium shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-          {{ isRefreshing ? 'Refreshing...' : 'Refresh Data' }}
-        </button>
-      </div>
+  <button @click="refreshEverything" :disabled="isRefreshing"
+    class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg font-medium shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+    {{ isRefreshing ? 'Refreshing...' : 'Refresh Data' }}
+  </button>
+</div>
+
 
     </div>
   </div>
@@ -117,7 +119,7 @@ const submitSurferCount = async () => {
   const count = surferCount.value
   if (!isNaN(count) && count >= 0) {
     submitting.value = true
-    await addEntry(count)
+    await addEntry(count, undefined, Number(waterLevelText.value.replace(' cm', '')), Number(waterFlowText.value.replace(' m³/s', '')))
     await fetchEntries()
     surferCountRaw.value = ''
     submitting.value = false
