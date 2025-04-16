@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { onMounted, watch, ref } from 'vue'
 import { Chart } from 'chart.js/auto'
+import { useI18n } from 'vue-i18n'
+
+const { locale, t } = useI18n()
 
 const props = defineProps<{
   labels: string[] // history + live
@@ -10,6 +13,13 @@ const props = defineProps<{
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let chart: Chart | null = null
 
+watch(locale, () => {
+  if (chart) {
+    chart.data.datasets[0].label = t('chart.waterLevelLabel')
+    chart.update()
+  }
+})
+
 onMounted(() => {
   if (canvasRef.value) {
     chart = new Chart(canvasRef.value, {
@@ -18,7 +28,7 @@ onMounted(() => {
         labels: [...props.labels],
         datasets: [
           {
-            label: 'Water Level (cm)',
+            label: t('chart.waterLevelLabel'),
             data: [...props.values],
             fill: true,
             backgroundColor: 'rgba(59, 130, 246, 0.2)',

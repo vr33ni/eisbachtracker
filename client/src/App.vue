@@ -1,12 +1,27 @@
 <template>
-<div id="app"
-  class="min-h-screen bg-gradient-to-b from-blue-100 to-white dark:from-gray-900 dark:to-gray-800 px-0 sm:px-4 py-6 sm:py-10">
+  <div id="app"
+    class="min-h-screen bg-gradient-to-b from-blue-100 to-white dark:from-gray-900 dark:to-gray-800 px-0 sm:px-4 py-6 sm:py-10">
 
-  <div class="w-full max-w-2xl sm:mx-auto space-y-6">
+
+    <div class="w-full max-w-2xl sm:mx-auto space-y-6">
+      <!-- Language Switcher (top right corner) -->
+      <div class="flex justify-end">
+        <button type="button" @click="setLang('en')"
+          :class="locale === 'en' ? 'bg-blue-600 text-white' : 'bg-white text-blue-600'"
+          class="px-3 py-1 rounded border mr-2">
+          EN
+        </button>
+        <button type="button" @click="setLang('es')"
+          :class="locale === 'es' ? 'bg-blue-600 text-white' : 'bg-white text-blue-600'"
+          class="px-3 py-1 rounded border">
+          ES
+        </button>
+      </div>
+
 
       <!-- Header -->
       <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-blue-600 dark:text-blue-300 text-center">
-        Eisbach Tracker
+        {{ $t('title') }}
       </h1>
 
       <!-- Water Data Card -->
@@ -21,7 +36,7 @@
 
       <!-- Surfer Spotter Card -->
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6 space-y-4">
-        <h2 class="text-2xl font-semibold text-blue-700 dark:text-blue-300">🧍 Surfer Spotter</h2>
+        <h2 class="text-2xl font-semibold text-blue-700 dark:text-blue-300">🧍 {{ $t('surferSpotter') }}</h2>
 
         <SurferPrediction :predictionLoading="predictionLoading" :predictionError="predictionError"
           :predictionLoadingMessage="predictionLoadingMessage" :currentHourPrediction="currentHourPrediction" />
@@ -34,11 +49,11 @@
 
       <!-- Refresh Button -->
       <div class="flex justify-center">
-  <button @click="refreshEverything" :disabled="isRefreshing"
-    class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg font-medium shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-    {{ isRefreshing ? 'Refreshing...' : 'Refresh Data' }}
-  </button>
-</div>
+        <button @click="refreshEverything" :disabled="isRefreshing"
+          class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg font-medium shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+          {{ isRefreshing ? t('refreshing') : t('refresh') }}
+        </button>
+      </div>
 
 
     </div>
@@ -47,7 +62,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-
+import { useI18n } from 'vue-i18n'
 import WaterDataCard from './components/WaterDataCard.vue'
 import SurferEntries from './components/SurferEntries.vue'
 import SurferPrediction from './components/SurferPrediction.vue'
@@ -56,12 +71,20 @@ import SurferEntriesForm from './components/SurferEntriesForm.vue'
 import { useTemperature } from '@/composables/useWaterTemperatureData'
 import { useSurferEntries } from '@/composables/useSurferEntries'
 import { useWaterLevelData } from '@/composables/useWaterLevelData'
+const { locale, t } = useI18n()
+ 
+const setLang = (lang: 'en' | 'es') => {
+  locale.value = lang
+  localStorage.setItem('locale', lang)
+}
+
+
 
 const surferCountRaw = ref('')
 const currentHourPrediction = ref<number | null>(null)
 const submitting = ref(false)
 
-const { waterTemperature, waterTemperatureLoading, waterTemperatureError, cachedAgeMinutes, ensureTemperature} = useTemperature()
+const { waterTemperature, waterTemperatureLoading, waterTemperatureError, cachedAgeMinutes, ensureTemperature } = useTemperature()
 
 const {
   entriesLoading,
@@ -83,6 +106,8 @@ const {
   showWaterLevelAlert,
   chartLabels,
   chartValues,
+  currentFlows,
+  currentValues,
   fetchWaterData,
   loading: waterLevelLoading,
 } = useWaterLevelData()
@@ -119,7 +144,7 @@ const submitSurferCount = async () => {
   const count = surferCount.value
   if (!isNaN(count) && count >= 0) {
     submitting.value = true
-    await addEntry(count, undefined, Number(waterLevelText.value.replace(' cm', '')), Number(waterFlowText.value.replace(' m³/s', '')))
+    await addEntry(count, undefined, currentValues.value[currentValues.value.length - 1], currentFlows.value[currentFlows.value.length - 1], waterTemperature.value ?? undefined)
     await fetchEntries()
     surferCountRaw.value = ''
     submitting.value = false
@@ -128,7 +153,7 @@ const submitSurferCount = async () => {
 
 
 const refreshEverything = async () => {
-  await ensureTemperature()     
+  await ensureTemperature()
   await fetchWaterData()
   await fetchEntries()
   await fetchPrediction()

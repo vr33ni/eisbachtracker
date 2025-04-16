@@ -6,7 +6,8 @@ export function useWaterLevelData() {
   const showWaterLevelAlert = ref(false)
 
   const currentLabels = ref<string[]>([])
-  const currentValues = ref<number[]>([])
+  const currentValues = ref<number[]>([])  // Water Level
+  const currentFlows = ref<number[]>([])   // Water Flow ✅
 
   const historyLabels = ref<string[]>([])
   const historyValues = ref<number[]>([])
@@ -47,9 +48,11 @@ export function useWaterLevelData() {
 
       currentLabels.value.push(label)
       currentValues.value.push(waterLevel)
+      currentFlows.value.push(waterFlow) // ✅ NEW
 
       if (currentLabels.value.length > 10) currentLabels.value.shift()
       if (currentValues.value.length > 10) currentValues.value.shift()
+      if (currentFlows.value.length > 10) currentFlows.value.shift() // ✅ NEW
     } catch (err) {
       console.error('Error fetching water data:', err)
       error.value = 'Failed to fetch water data'
@@ -67,5 +70,8 @@ export function useWaterLevelData() {
     error,
     chartLabels,
     chartValues,
+    currentLabels,
+    currentValues,
+    currentFlows,   
   }
 }

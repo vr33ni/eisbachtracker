@@ -26,12 +26,15 @@ type WaterConditions struct {
 	Flow  float64
 }
 
+// --- Interface
 type WaterDataProvider interface {
 	GetCurrentWeather() (*WeatherData, error)
 	GetCachedWaterTemperature() (float64, error)
 	GetLatestWaterTemperature() (float64, error) // <-- Add this line
 	GetCurrentWaterConditions() (float64, float64, error)
 }
+
+// --- API Methods
 
 func (ws *WaterService) GetCurrentWeather() (*WeatherData, error) {
 	return GetCurrentWeather()

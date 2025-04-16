@@ -16,7 +16,7 @@ func GetCachedWaterTemperature() (float64, error) {
 	cacheLock.Lock()
 	defer cacheLock.Unlock()
 
-	if lastWaterTemp != nil && time.Since(lastFetched) < 10*time.Minute {
+	if lastWaterTemp != nil && time.Since(lastFetched) < 60*time.Minute {
 		return *lastWaterTemp, nil
 	}
 

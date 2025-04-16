@@ -14,7 +14,7 @@ func TestAddAndGetEntries(t *testing.T) {
 
 	service.WaterService = mockWS
 
-	err := service.AddEntry(5, time.Now(), nil, nil)
+	err := service.AddEntry(5, time.Now(), nil, nil, nil)
 	if err != nil {
 		t.Fatalf("Failed to add entry: %v", err)
 	}
