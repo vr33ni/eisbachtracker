@@ -1,14 +1,33 @@
 {
-    "title": "Rastreador de Eisbach",
-    "surferSpotter": "Contador de Surfistas",
-    "refresh": "Actualizar Datos",
-    "submit": "Enviar",
-    "lowTideAlert": "Alerta de marea baja",
-    "waterLevel": "Nivel del agua",
-    "waterFlow": "Flujo de agua",
-    "waterTemp": "Temperatura del agua",
-    "loading": "Cargando...",
-    "cachedAgo": "en caché hace {minutes} min",
-    "waterChartTitle": "Historial del nivel de agua"
+  "title": "Rastreador del Eisbach",
+  "surferSpotter": "Contador de Surfistas",
+  "refresh": "Actualizar Datos",
+  "submit": "Enviar",
+
+  "lowTideAlert": "Alerta de marea baja",
+  "waterLevel": "Nivel del agua",
+  "waterFlow": "Flujo de agua",
+  "waterTemp": "Temperatura del agua",
+  "loading": "Cargando...",
+  "cachedAgo": "en caché hace {minutes} min",
+  "waterChartTitle": "Historial del nivel de agua",
+
+  "entriesToday": "# hoy",
+  "loadingEntries": "Cargando entradas...",
+  "noEntriesToday": "Aún no hay entradas hoy",
+  "entryHistoryTitle": "🕰️ Historial de entradas",
+  "noHistory": "Aún no hay historial",
+  "surfers": "surfistas",
+
+  "surferCountPlaceholder": "Número de surfistas",
+  "submitting": "Enviando...",
+
+  "predictionHeading": "Predicción para la próxima hora",
+  "predictionLoadingMessage": "Cargando predicción...",
+  "predictedSurfers": "Surfistas predichos:",
+  "notEnoughData": "No hay suficientes datos para predecir la multitud",
+
+  "chart": {
+    "waterLevelLabel": "Nivel del agua (cm)"
   }
-  
+}

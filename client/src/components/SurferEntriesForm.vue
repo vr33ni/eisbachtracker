@@ -1,10 +1,10 @@
 <template>
-<form @submit.prevent="onSubmit" class="flex flex-col sm:flex-row items-stretch gap-2 w-full">
-  <input
+  <form @submit.prevent="onSubmit" class="flex flex-col sm:flex-row items-stretch gap-2 w-full">
+    <input
       v-model="countRaw"
       @input="onInputNumeric"
       type="text"
-      placeholder="Number of surfers"
+      :placeholder="t('surferCountPlaceholder')"
       inputmode="numeric"
       pattern="[0-9]*"
       class="px-3 py-2 rounded border dark:bg-gray-800 dark:border-gray-600"
@@ -36,13 +36,17 @@
           d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
         />
       </svg>
-      <span>{{ submitting ? 'Submitting...' : 'Submit' }}</span>
+      <span>{{ submitting ? t('submitting') : t('submit') }}</span>
     </button>
   </form>
 </template>
 
+
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   submitting: boolean

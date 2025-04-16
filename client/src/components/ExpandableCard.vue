@@ -5,7 +5,7 @@
       @click="toggle"
       class="flex items-center justify-between px-6 py-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
     >
-      <h3 class="text-lg font-medium text-gray-800 dark:text-gray-200">
+      <h3 class="text-md font-medium text-gray-800 dark:text-gray-200">
         {{ title }}
       </h3>
 

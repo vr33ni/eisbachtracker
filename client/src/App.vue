@@ -51,7 +51,7 @@
       <div class="flex justify-center">
         <button @click="refreshEverything" :disabled="isRefreshing"
           class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-lg font-medium shadow transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-          {{ isRefreshing ? 'Refreshing...' : 'Refresh Data' }}
+          {{ isRefreshing ? t('refreshing') : t('refresh') }}
         </button>
       </div>
 
@@ -71,9 +71,8 @@ import SurferEntriesForm from './components/SurferEntriesForm.vue'
 import { useTemperature } from '@/composables/useWaterTemperatureData'
 import { useSurferEntries } from '@/composables/useSurferEntries'
 import { useWaterLevelData } from '@/composables/useWaterLevelData'
-
-const { locale } = useI18n()
-
+const { locale, t } = useI18n()
+ 
 const setLang = (lang: 'en' | 'es') => {
   locale.value = lang
   localStorage.setItem('locale', lang)
