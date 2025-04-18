@@ -1,24 +1,23 @@
 import { computed, ref } from 'vue'
 
 export function useWaterLevelData() {
-  const waterLevelText = ref('Loading...')
-  const waterFlowText = ref('Loading...')
   const showWaterLevelAlert = ref(false)
 
-  const currentLabels = ref<string[]>([])
-  const currentValues = ref<number[]>([])  // Water Level
-  const currentFlows = ref<number[]>([])   // Water Flow ✅
+  const currentWaterLevel = ref<number | null>(null)
+  const currentWaterFlow = ref<number | null>(null)
+  const requestDate = ref<string>('')
+
+  const labels = ref<string[]>([])
+  const values = ref<number[]>([])
 
   const historyLabels = ref<string[]>([])
   const historyValues = ref<number[]>([])
 
-  const loading = ref(false)
+  const waterDataLoading = ref(false)
   const error = ref<string | null>(null)
 
-  const chartLabels = computed(() => [...historyLabels.value, ...currentLabels.value])
-  const chartValues = computed(() => [...historyValues.value, ...currentValues.value])
-
-  const pegelAlarmApiUrl = import.meta.env.VITE_PEGEL_ALARM_API_URL
+  const chartLabels = computed(() => [...historyLabels.value, ...labels.value])
+  const chartValues = computed(() => [...historyValues.value, ...values.value])
 
   const notifyUser = (waterLevel: number) => {
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -29,49 +28,49 @@ export function useWaterLevelData() {
   }
 
   const fetchWaterData = async () => {
-    loading.value = true
+    waterDataLoading.value = true
+    error.value = null
+
     try {
-      const response = await fetch(pegelAlarmApiUrl)
-      const data = await response.json()
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_API_URL}/conditions/water`)
+      if (!res.ok) throw new Error('Backend error')
 
-      const station = data?.payload?.stations?.[0]
-      const waterLevel = station?.data?.[0]?.value
-      const waterFlow = station?.data?.[1]?.value
+      const data = await res.json()
 
-      waterLevelText.value = `${waterLevel} cm`
-      waterFlowText.value = `${waterFlow} m³/s`
-      showWaterLevelAlert.value = waterLevel <= 140
+      requestDate.value = new Date(data.request_date).toLocaleTimeString()
+      currentWaterLevel.value = data.water_level
+      currentWaterFlow.value = data.water_flow
 
-      if (showWaterLevelAlert.value) notifyUser(waterLevel)
+      showWaterLevelAlert.value = currentWaterLevel.value !== null && currentWaterLevel.value <= 140
+
+      if (showWaterLevelAlert.value && currentWaterLevel.value !== null) notifyUser(currentWaterLevel.value)
 
       const label = new Date().toLocaleTimeString()
+      labels.value.push(label)
+      if (currentWaterLevel.value !== null) {
+        values.value.push(currentWaterLevel.value)
+      }
 
-      currentLabels.value.push(label)
-      currentValues.value.push(waterLevel)
-      currentFlows.value.push(waterFlow) // ✅ NEW
+      if (labels.value.length > 10) labels.value.shift()
+      if (values.value.length > 10) values.value.shift()
 
-      if (currentLabels.value.length > 10) currentLabels.value.shift()
-      if (currentValues.value.length > 10) currentValues.value.shift()
-      if (currentFlows.value.length > 10) currentFlows.value.shift() // ✅ NEW
     } catch (err) {
-      console.error('Error fetching water data:', err)
+      console.error('Error fetching water data from backend:', err)
       error.value = 'Failed to fetch water data'
     } finally {
-      loading.value = false
+      waterDataLoading.value = false
     }
   }
 
   return {
-    waterLevelText,
-    waterFlowText,
+    requestDate,
+    currentWaterLevel,
+    currentWaterFlow,
     showWaterLevelAlert,
     fetchWaterData,
-    loading,
+    waterDataLoading,
     error,
     chartLabels,
     chartValues,
-    currentLabels,
-    currentValues,
-    currentFlows,   
   }
 }

@@ -15,12 +15,14 @@ import (
 
 // RegisterRoutes registers all API routes
 func RegisterRoutes(db *pgxpool.Pool) {
+	airService := conditions.NewAirService()
 	waterService := conditions.NewWaterService()
-	surferService := surferdata.NewService(db, waterService)
-	http.HandleFunc("/api/conditions/weather", middleware.WithCORS(handleWeather(waterService)))
-	http.HandleFunc("/api/conditions/water-temperature", middleware.WithCORS(handleWaterTemperature(waterService)))
+	surferService := surferdata.NewService(db, waterService, airService)
+	http.HandleFunc("/api/conditions/weather", middleware.WithCORS(handleWeather(airService)))
+	http.HandleFunc("/api/conditions/water/temperature", middleware.WithCORS(handleWaterTemperature(waterService)))
+	http.HandleFunc("/api/conditions/water", middleware.WithCORS(handleWaterLevelAndFlow(waterService)))
 	http.HandleFunc("/api/surfers", middleware.WithCORS(handleSurferEntries(surferService)))
-	http.HandleFunc("/api/surfers/predict", middleware.WithCORS(handlePrediction(surferService, waterService)))
+	http.HandleFunc("/api/surfers/predict", middleware.WithCORS(handlePrediction(airService, surferService, waterService)))
 }
 
 // -- Handlers --
@@ -41,9 +43,9 @@ func handleWaterTemperature(waterService conditions.WaterDataProvider) http.Hand
 	}
 }
 
-func handleWeather(waterService conditions.WaterDataProvider) http.HandlerFunc {
+func handleWeather(airService conditions.AirDataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		weatherData, err := waterService.GetCurrentWeather()
+		weatherData, err := airService.GetCurrentWeather()
 		if err != nil {
 			log.Println("❌", err)
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -55,7 +57,25 @@ func handleWeather(waterService conditions.WaterDataProvider) http.HandlerFunc {
 	}
 }
 
-func handlePrediction(service *surferdata.Service, waterService conditions.WaterDataProvider) http.HandlerFunc {
+func handleWaterLevelAndFlow(waterService conditions.WaterDataProvider) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		result, err := waterService.GetLatestWaterLevelAndFlow()
+		if err != nil {
+			log.Printf("❌ Failed to get water level/flow: %v", err)
+			http.Error(w, "Failed to get water data", http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]any{
+			"water_level":  result.Level,
+			"water_flow":   result.Flow,
+			"request_date": result.RequestDate,
+		})
+	}
+}
+
+func handlePrediction(airService conditions.AirDataProvider, service *surferdata.Service, waterService conditions.WaterDataProvider) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		hourStr := r.URL.Query().Get("hour")
 		waterTempStr := r.URL.Query().Get("water_temperature")
@@ -89,7 +109,7 @@ func handlePrediction(service *surferdata.Service, waterService conditions.Water
 			if t, err := strconv.ParseFloat(airTempStr, 64); err == nil {
 				airTemp = &t
 			}
-		} else if current, err := waterService.GetCurrentWeather(); err == nil {
+		} else if current, err := airService.GetCurrentWeather(); err == nil {
 			airTemp = &current.Temp
 			if conditionStr == "" {
 				conditionStr = current.Condition

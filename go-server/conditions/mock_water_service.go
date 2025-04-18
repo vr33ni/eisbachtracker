@@ -3,6 +3,11 @@ package conditions
 // MockWaterService is a mock implementation of WaterDataProvider for testing.
 type MockWaterService struct{}
 
+// GetLatestWaterLevelAndFlow implements WaterDataProvider.
+func (m *MockWaterService) GetLatestWaterLevelAndFlow() (*WaterLevelAndFlow, error) {
+	panic("unimplemented")
+}
+
 func (m *MockWaterService) GetCurrentWeather() (*WeatherData, error) {
 	return &WeatherData{
 		Temp:      20.0,

@@ -2,11 +2,17 @@
   "title": "Rastreador del Eisbach",
   "surferSpotter": "Contador de Surfistas",
   "refresh": "Actualizar Datos",
+  "refreshing": "Actualizando...",
   "submit": "Enviar",
+  "clickToCancel": "Haz clic para cancelar",
+  "lastUpdated": "Última actualización",
+  "lastUpdatedJustNow": "hace un momento",
+  "lastUpdatedMinutesAgo": "hace {minutes} min",
 
   "lowTideAlert": "Alerta de marea baja",
   "waterLevel": "Nivel del agua",
   "waterFlow": "Flujo de agua",
+  "requestDate": "Datos a las",
   "waterTemp": "Temperatura del agua",
   "loading": "Cargando...",
   "cachedAgo": "en caché hace {minutes} min",
@@ -15,7 +21,7 @@
   "entriesToday": "# hoy",
   "loadingEntries": "Cargando entradas...",
   "noEntriesToday": "Aún no hay entradas hoy",
-  "entryHistoryTitle": "🕰️ Historial de entradas",
+  "entryHistoryTitle": "🕰️ Datos históricos",
   "noHistory": "Aún no hay historial",
   "surfers": "surfistas",
 
@@ -23,7 +29,6 @@
   "submitting": "Enviando...",
 
   "predictionHeading": "Predicción para la próxima hora",
-  "predictionLoadingMessage": "Cargando predicción...",
   "predictedSurfers": "Surfistas predichos:",
   "notEnoughData": "No hay suficientes datos para predecir la multitud",
 
