@@ -57,7 +57,9 @@ watch(
     if (loading) startRotating()
     else stopRotating()
   },
+  { immediate: true }  
 )
+
 
 onUnmounted(stopRotating)
 </script>

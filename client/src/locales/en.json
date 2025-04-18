@@ -33,6 +33,8 @@
   "notEnoughData": "Not enough data to predict crowd",
 
   "chart": {
-    "waterLevelLabel": "Water Level (cm)"
+    "waterLevelLabel": "Water Level (cm)",
+    "daily": "daily",
+    "hourly": "hourly"
   }
 }

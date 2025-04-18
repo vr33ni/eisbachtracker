@@ -30,7 +30,7 @@
           :request-date="requestDate" :show-water-level-alert="showWaterLevelAlert"
           :water-temperature="waterTemperature" :water-temperature-loading="waterTemperatureLoading"
           :water-temperature-error="waterTemperatureError" :chart-labels="chartLabels" :chart-values="chartValues"
-          :cached-age-minutes="cachedAgeMinutes" :water-data-loading="waterDataLoading" />
+          :cached-age-minutes="cachedAgeMinutes" :water-data-loading="waterDataLoading" v-model:mode="chartViewMode" />
       </div>
 
       <!-- Surfer Spotter Card -->
@@ -120,23 +120,24 @@ const shouldShowLastUpdated = computed(() => {
 })
 
 
-
-
 const refreshEverything = async () => {
   isRefreshing.value = true
   startRotating()
 
   const minDelay = new Promise(resolve => setTimeout(resolve, 3000)) // 3s guaranteed
+  const hour = new Date().getHours()
+
+  // Start fetching prediction early - to show loading messages within component
+  const predictionPromise = fetchPrediction(hour, waterTemperature.value ?? undefined, 3000)
 
   await Promise.all([
     fetchWaterData(),
     fetchEntries(),
     ensureTemperature(),
-    minDelay
+    fetchHistoricalWaterData(),
+    predictionPromise, // now runs in parallel
+    minDelay,
   ])
-
-  const hour = new Date().getHours()
-  await fetchPrediction(hour, waterTemperature.value ?? undefined, 3000)
 
   const now = new Date().toISOString()
   localStorage.setItem('lastRefresh', now)
@@ -180,7 +181,9 @@ const {
   chartLabels,
   chartValues,
   fetchWaterData,
+  fetchHistoricalWaterData,
   waterDataLoading,
+  chartViewMode, 
 } = useWaterLevelData()
 
 

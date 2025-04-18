@@ -33,6 +33,8 @@
   "notEnoughData": "No hay suficientes datos para predecir la multitud",
 
   "chart": {
-    "waterLevelLabel": "Nivel del agua (cm)"
+    "waterLevelLabel": "Nivel del agua (cm)",
+    "daily": "diario",
+    "hourly": "horario"
   }
 }

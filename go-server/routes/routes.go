@@ -2,6 +2,7 @@ package routes
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -20,6 +21,7 @@ func RegisterRoutes(db *pgxpool.Pool) {
 	surferService := surferdata.NewService(db, waterService, airService)
 	http.HandleFunc("/api/conditions/weather", middleware.WithCORS(handleWeather(airService)))
 	http.HandleFunc("/api/conditions/water/temperature", middleware.WithCORS(handleWaterTemperature(waterService)))
+	http.HandleFunc("/api/conditions/water/history", middleware.WithCORS(HandleWaterHistory(waterService)))
 	http.HandleFunc("/api/conditions/water", middleware.WithCORS(handleWaterLevelAndFlow(waterService)))
 	http.HandleFunc("/api/surfers", middleware.WithCORS(handleSurferEntries(surferService)))
 	http.HandleFunc("/api/surfers/predict", middleware.WithCORS(handlePrediction(airService, surferService, waterService)))
@@ -179,5 +181,23 @@ func handleSurferEntries(service *surferdata.Service) http.HandlerFunc {
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
+	}
+}
+
+func HandleWaterHistory(service *conditions.WaterDataService) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		history, err := service.GetHistoricalWaterLevels()
+		if err != nil {
+			http.Error(w, "Failed to fetch historical water levels", http.StatusInternalServerError)
+			fmt.Println("❌ Scraper error:", err)
+			return
+		}
+		fmt.Printf("📊 Scraper returned %d entries\n", len(history))
+		// for _, h := range history {
+		// 	fmt.Println("📅", h.DateTime, "📏", h.Value)
+		// }
+
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(history)
 	}
 }

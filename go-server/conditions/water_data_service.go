@@ -15,15 +15,15 @@ import (
 	"time"
 )
 
-type WaterService struct {
+type WaterDataService struct {
 	cacheLock     sync.Mutex
 	lastWaterTemp *float64
 	lastFetched   time.Time
 	cacheDuration time.Duration
 }
 
-func NewWaterService() *WaterService {
-	return &WaterService{
+func NewWaterService() *WaterDataService {
+	return &WaterDataService{
 		cacheDuration: 60 * time.Minute,
 	}
 }
@@ -54,7 +54,7 @@ type WaterDataProvider interface {
 
 // --- API Methods
 
-func (ws *WaterService) GetCachedWaterTemperature() (float64, error) {
+func (ws *WaterDataService) GetCachedWaterTemperature() (float64, error) {
 	ws.cacheLock.Lock()
 	defer ws.cacheLock.Unlock()
 
@@ -77,7 +77,7 @@ func (ws *WaterService) GetCachedWaterTemperature() (float64, error) {
 
 // --- Public Fetching Method ---
 
-func (ws *WaterService) GetLatestWaterTemperature() (float64, error) {
+func (ws *WaterDataService) GetLatestWaterTemperature() (float64, error) {
 	client, err := createHTTPClient()
 	if err != nil {
 		return 0, fmt.Errorf("creating HTTP client: %w", err)
@@ -238,7 +238,7 @@ func parseLatestWaterTemperature(rows [][]string) (float64, error) {
 }
 
 // --- PegelAlarm API Fetching ---
-func (ws *WaterService) fetchPegelAlarmData() (*PegelAlarmResponse, error) {
+func (ws *WaterDataService) fetchPegelAlarmData() (*PegelAlarmResponse, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
 	res, err := client.Get("https://api.pegelalarm.at/api/station/1.0/list?commonid=16515005-de&responseDetailLevel=high")
 	if err != nil {
@@ -259,7 +259,7 @@ func (ws *WaterService) fetchPegelAlarmData() (*PegelAlarmResponse, error) {
 }
 
 // Fetches the latest water level and flow from PegelAlarm
-func (ws *WaterService) GetLatestWaterLevelAndFlow() (*WaterLevelAndFlow, error) {
+func (ws *WaterDataService) GetLatestWaterLevelAndFlow() (*WaterLevelAndFlow, error) {
 	data, err := ws.fetchPegelAlarmData() // ← Your PegelAlarm fetcher
 	if err != nil {
 		return nil, err
@@ -284,4 +284,8 @@ func (ws *WaterService) GetLatestWaterLevelAndFlow() (*WaterLevelAndFlow, error)
 		RequestDate: parsedDate.Format(time.RFC3339), // Converts to "2025-04-17T22:43:04+02:00"
 	}, nil
 
+}
+
+func (ws *WaterDataService) GetHistoricalWaterLevels() ([]HistoricalWaterLevel, error) {
+	return ScrapeWaterLevelHistory()
 }
