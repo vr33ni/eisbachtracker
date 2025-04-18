@@ -240,7 +240,8 @@ func parseLatestWaterTemperature(rows [][]string) (float64, error) {
 // --- PegelAlarm API Fetching ---
 func (ws *WaterDataService) fetchPegelAlarmData() (*PegelAlarmResponse, error) {
 	client := &http.Client{Timeout: 10 * time.Second}
-	res, err := client.Get("https://api.pegelalarm.at/api/station/1.0/list?commonid=16515005-de&responseDetailLevel=high")
+	url := os.Getenv("PEGELALARM_API_URL")
+	res, err := client.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch pegelalarm data: %w", err)
 	}

@@ -3,6 +3,7 @@ package conditions
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
@@ -16,7 +17,7 @@ type HistoricalWaterLevel struct {
 
 // Scrapes historical water level values from the HND Bayern site
 func ScrapeWaterLevelHistory() ([]HistoricalWaterLevel, error) {
-	url := "https://www.hnd.bayern.de/pegel/isar/muenchen-himmelreichbruecke-16515005/tabelle?methode=wasserstand&days=5"
+	url := os.Getenv("HND_BAYERN_URL")
 
 	resp, err := http.Get(url)
 	if err != nil {
