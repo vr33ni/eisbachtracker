@@ -2,11 +2,17 @@
   "title": "Eisbach Tracker",
   "surferSpotter": "Surfer Spotter",
   "refresh": "Refresh Data",
+  "refreshing": "Refreshing...",
   "submit": "Submit",
+  "clickToCancel": "Click anywhere to cancel",
+  "lastUpdated": "Last refreshed",
+  "lastUpdatedJustNow": "just now",
+  "lastUpdatedMinutesAgo": "{minutes} min ago",
 
   "lowTideAlert": "Low tide alert",
   "waterLevel": "Water Level",
   "waterFlow": "Water Flow",
+  "requestDate": "Data as of",
   "waterTemp": "Water Temperature",
   "loading": "Loading...",
   "cachedAgo": "cached {minutes} min ago",
@@ -15,19 +21,20 @@
   "entriesToday": "# today",
   "loadingEntries": "Loading entries...",
   "noEntriesToday": "No entries yet today",
-  "entryHistoryTitle": "🕰️ Entry History",
+  "entryHistoryTitle": "🕰️ Historic data",
   "noHistory": "No historic entries yet",
   "surfers": "surfers",
 
   "surferCountPlaceholder": "Number of surfers",
-   "submitting": "Submitting...",
+  "submitting": "Submitting...",
 
-   "predictionHeading": "Prediction for the next hour",
-   "predictionLoadingMessage": "Loading prediction...",
-   "predictedSurfers": "Predicted surfers:",
-   "notEnoughData": "Not enough data to predict crowd",
+  "predictionHeading": "Prediction for the next hour",
+  "predictedSurfers": "Predicted surfers:",
+  "notEnoughData": "Not enough data to predict crowd",
 
-   "chart": {
-    "waterLevelLabel": "Water Level (cm)"
+  "chart": {
+    "waterLevelLabel": "Water Level (cm)",
+    "daily": "daily",
+    "hourly": "hourly"
   }
 }

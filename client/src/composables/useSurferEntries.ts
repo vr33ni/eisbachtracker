@@ -2,20 +2,8 @@ import { ref, computed } from 'vue'
 import axios from 'axios'
 import type { SurferEntryDto } from '@/dto/surfer-entry.dto'
 import type { PredictionResponseDto } from '@/dto/prediction-response.dto'
-import { useLoadingMessages } from './useLoadingMessages'
-import { useWaterLevelData } from './useWaterLevelData'
 
 const API_BASE_URL = import.meta.env.VITE_BACKEND_API_URL
-
-const predictionMessages = [
-  '🔮 Watching the river...',
-  '🤔 Estimating surf hype...',
-  '📈 Crunching the numbers...',
-  '🐟 Asking fish for advice...',
-  '📷 Checking river cams...',
-  '🌊 Feeling the vibes...',
-  '⏳ Counting wetsuits...',
-]
 
 export function useSurferEntries() {
   const entries = ref<SurferEntryDto[]>([])
@@ -24,14 +12,8 @@ export function useSurferEntries() {
 
   const predictionLoading = ref(false)
   const predictionError = ref<string | null>(null)
-
-  const {
-    loadingMessage: predictionLoadingMessage,
-    startRotating: startPredictionMessages,
-    stopRotating: stopPredictionMessages,
-  } = useLoadingMessages(predictionMessages)
-
-  const { currentValues, currentFlows } = useWaterLevelData()
+  const predictionHasBeenFetched = ref(false)
+  const currentHourPrediction = ref<number | null>(null)
 
   const fetchEntries = async () => {
     entriesLoading.value = true
@@ -57,14 +39,15 @@ export function useSurferEntries() {
       const body: any = {
         count,
         timestamp: time || new Date().toISOString(),
-        water_level: waterLevel ?? currentValues.value[currentValues.value.length - 1], // fallback to latest
-        water_flow: waterFlow ?? currentFlows.value[currentFlows.value.length - 1],    // fallback to latest
+        water_level: waterLevel,
+        water_flow: waterFlow,
       }
 
-      if (waterTemperature !== undefined) body.water_temperature = waterTemperature
+      if (waterTemperature !== undefined) {
+        body.water_temperature = waterTemperature
+      }
 
       const res = await axios.post(`${API_BASE_URL}/surfers`, body)
-
       if (!res.status.toString().startsWith('2')) throw new Error('Failed to add entry')
 
       await fetchEntries()
@@ -73,10 +56,10 @@ export function useSurferEntries() {
     }
   }
 
-  const getPredictionForHour = async (hour: number, waterTemperature?: number) => {
+  const fetchPrediction = async (hour: number, waterTemperature?: number, delay = 2500) => {
     predictionLoading.value = true
     predictionError.value = null
-    startPredictionMessages()
+    predictionHasBeenFetched.value = false
 
     try {
       const url = new URL(`${API_BASE_URL}/surfers/predict`)
@@ -85,23 +68,30 @@ export function useSurferEntries() {
         url.searchParams.set('water_temperature', waterTemperature.toString())
       }
 
-      const res = await axios.get(url.toString())
-      return res.data as PredictionResponseDto
+      const [res] = await Promise.all([
+        axios.get(url.toString()),
+        new Promise(resolve => setTimeout(resolve, delay)), // optional UI delay
+      ])
+
+      const data = res.data as PredictionResponseDto
+      currentHourPrediction.value = data.prediction
+      return data
     } catch (err) {
       predictionError.value = err instanceof Error ? err.message : 'Failed to fetch prediction'
+      currentHourPrediction.value = null
       return null
     } finally {
+      predictionHasBeenFetched.value = true
       predictionLoading.value = false
-      stopPredictionMessages()
     }
   }
 
   const todaysEntries = computed(() =>
-    entries.value.filter((e) => new Date(e.timestamp).toDateString() === new Date().toDateString()),
+    entries.value.filter((e) => new Date(e.timestamp).toDateString() === new Date().toDateString())
   )
 
   const historyEntries = computed(() =>
-    entries.value.filter((e) => new Date(e.timestamp).toDateString() !== new Date().toDateString()),
+    entries.value.filter((e) => new Date(e.timestamp).toDateString() !== new Date().toDateString())
   )
 
   return {
@@ -111,10 +101,11 @@ export function useSurferEntries() {
     entriesLoadingMessage: 'Loading entries...',
     fetchEntries,
     addEntry,
-    getPredictionForHour,
+    fetchPrediction,
     predictionLoading,
     predictionError,
-    predictionLoadingMessage,
+    predictionHasBeenFetched,
+    currentHourPrediction,
     todaysEntries,
     historyEntries,
   }

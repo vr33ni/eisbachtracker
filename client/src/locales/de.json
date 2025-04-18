@@ -1,0 +1,40 @@
+{
+  "title": "Eisbach Tracker",
+  "surferSpotter": "Surfer-Zähler",
+  "refresh": "Aktualisieren",
+  "refreshing": "Aktualisiere...",
+  "submit": "Absenden",
+  "clickToCancel": "Zum Abbrechen irgendwo klicken",
+  "lastUpdated": "Zuletzt aktualisiert",
+  "lastUpdatedJustNow": "Gerade eben",
+  "lastUpdatedMinutesAgo": "vor {minutes} Min",
+
+  "lowTideAlert": "Niedrigwasser-Warnung",
+  "waterLevel": "Wasserstand",
+  "waterFlow": "Wasserfluss",
+  "requestDate": "Daten vom",
+  "waterTemp": "Wassertemperatur",
+  "loading": "Lade...",
+  "cachedAgo": "vor {minutes} Min. zwischengespeichert",
+  "waterChartTitle": "Wasserstand Verlauf",
+ 
+  "entriesToday": "# heute",
+  "loadingEntries": "Lade Einträge...",
+  "noEntriesToday": "Heute noch keine Einträge",
+  "entryHistoryTitle": "🕰️ Verlauf",
+  "noHistory": "Keine historischen Einträge",
+  "surfers": "Surfer",
+
+  "surferCountPlaceholder": "Anzahl der Surfer",
+  "submitting": "Wird gesendet...",
+
+  "predictionHeading": "Prognose für die nächste Stunde",
+  "predictedSurfers": "Prognostizierte Surfer:",
+  "notEnoughData": "Nicht genügend Daten für Prognose",
+
+  "chart": {
+    "waterLevelLabel": "Wasserstand (cm)",
+    "daily": "Täglich",
+    "hourly": "Stündlich"
+  }
+}

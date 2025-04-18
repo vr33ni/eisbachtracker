@@ -7,12 +7,38 @@ import (
 	"github.com/vr33ni/eisbachtracker-pwa/go-server/conditions"
 )
 
+type MockWaterService struct{}
+
+// GetLatestWaterTemperature implements conditions.WaterDataProvider.
+func (m *MockWaterService) GetLatestWaterTemperature() (float64, error) {
+	panic("unimplemented")
+}
+
+func (m *MockWaterService) GetCachedWaterTemperature() (float64, error) {
+	return 15.5, nil
+}
+
+func (m *MockWaterService) GetLatestWaterLevelAndFlow() (*conditions.WaterLevelAndFlow, error) {
+	return &conditions.WaterLevelAndFlow{
+		Level: 120.0,
+		Flow:  20.5,
+	}, nil
+}
+
+type MockAirService struct{}
+
+func (m *MockAirService) GetCurrentWeather() (*conditions.WeatherData, error) {
+	return &conditions.WeatherData{
+		Temp:      22.3,
+		Condition: "Sunny",
+	}, nil
+}
+
 func TestAddAndGetEntries(t *testing.T) {
 	service := setupTestService(t)
 
-	mockWS := &conditions.MockWaterService{}
-
-	service.WaterService = mockWS
+	service.WaterService = &MockWaterService{}
+	service.AirService = &MockAirService{}
 
 	err := service.AddEntry(5, time.Now(), nil, nil, nil)
 	if err != nil {

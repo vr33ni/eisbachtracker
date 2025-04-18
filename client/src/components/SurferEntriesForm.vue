@@ -50,14 +50,21 @@ const { t } = useI18n()
 
 const props = defineProps<{
   submitting: boolean
+  modelValue: string  
 }>()
 
 const emit = defineEmits<{
   (e: 'submit', count: number): void
+  (e: 'update:modelValue', value: string): void  
 }>()
 
-const countRaw = ref('')
-const count = computed(() => Number(countRaw.value))
+const countRaw = computed({
+  get: () => props.modelValue,
+  set: (val) => emit('update:modelValue', val),
+})
+const count = computed(() => {
+  return countRaw.value === '' ? null : Number(countRaw.value)
+})
 
 const onInputNumeric = (e: Event) => {
   const target = e.target as HTMLInputElement
@@ -66,9 +73,10 @@ const onInputNumeric = (e: Event) => {
 }
 
 const onSubmit = () => {
-  if (!isNaN(count.value) && count.value >= 0) {
+  if (count.value != null && count.value >= 0) {
     emit('submit', count.value)
     countRaw.value = ''
   }
 }
+
 </script>

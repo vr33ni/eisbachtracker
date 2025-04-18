@@ -32,10 +32,16 @@ type SurferEntryResponse struct {
 type Service struct {
 	DB           *pgxpool.Pool
 	WaterService conditions.WaterDataProvider // ✅ use the interface here
+	AirService   conditions.AirDataProvider   // ✅ use the interface here
+
 }
 
-func NewService(db *pgxpool.Pool, ws *conditions.WaterService) *Service {
-	return &Service{DB: db, WaterService: ws}
+func NewService(db *pgxpool.Pool, ws conditions.WaterDataProvider, as conditions.AirDataProvider) *Service {
+	return &Service{
+		DB:           db,
+		WaterService: ws,
+		AirService:   as,
+	}
 }
 
 func (s *Service) AddEntry(count int, when time.Time, waterLevel *float64, waterFlow *float64, waterTempOptional *float64) error {
@@ -43,7 +49,7 @@ func (s *Service) AddEntry(count int, when time.Time, waterLevel *float64, water
 		when = time.Now()
 	}
 
-	weather, err := conditions.GetCurrentWeather()
+	weather, err := s.AirService.GetCurrentWeather()
 	if err != nil {
 		log.Println("⚠️ Could not fetch air weather:", err)
 		weather = &conditions.WeatherData{Temp: 0, Condition: "Unknown"}
@@ -63,17 +69,19 @@ func (s *Service) AddEntry(count int, when time.Time, waterLevel *float64, water
 	// Prefer frontend-provided water level & flow
 	if waterLevel == nil || waterFlow == nil {
 		log.Println("⚠️ No water level or flow provided from frontend, fetching from backend...")
-		wl, wf, err := s.WaterService.GetCurrentWaterConditions()
+		result, err := s.WaterService.GetLatestWaterLevelAndFlow()
 		if err != nil {
 			log.Println("⚠️ Could not fetch water level/flow from backend:", err)
-			wl, wf = 0, 0
+			wl := result.Level
+			wf := result.Flow
+			if waterLevel == nil {
+				waterLevel = &wl
+			}
+			if waterFlow == nil {
+				waterFlow = &wf
+			}
 		}
-		if waterLevel == nil {
-			waterLevel = &wl
-		}
-		if waterFlow == nil {
-			waterFlow = &wf
-		}
+
 	}
 
 	_, err = s.DB.Exec(context.Background(),

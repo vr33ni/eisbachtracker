@@ -29,7 +29,7 @@ export function useTemperature() {
     waterTemperatureError.value = null
   
     try {
-      const res = await axios.get(`${API_BASE_URL}/conditions/water-temperature`)
+      const res = await axios.get(`${API_BASE_URL}/conditions/water/temperature`)
       const data: WaterTemperatureDto = res.data
       waterTemperature.value = data.water_temperature
       cacheTimestamp.value = Date.now()

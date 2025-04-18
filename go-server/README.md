@@ -2,7 +2,9 @@
 
 ## Backend (Go)
 
-The Go server downloads a CSV file from gkd.bayern.de, unzips it, and extracts the latest water temperature.
+The Go server downloads a CSV file from gkd.bayern.de, unzips it, and extracts the latest water temperature.  
+It uses APIs to get current weather and water data. (Water level & flow)
+It also scrapes the latest historical water levels from the official Hochwassernachrichtendienst Bayern site.
 
 Powered by:
 
@@ -28,8 +30,10 @@ Powered by:
 
 ```cmd
 //.env
-DATABASE_URL=postgres://your-username@localhost:5432/eisbach 
 ENV=local
+DATABASE_URL=postgres://your-username@localhost:5432/eisbach 
+EGELALARM_API_URL=Pegelalarm API
+HND_BAYERN_URL=Hochwassernachrichtendienst Bayern
 ```
 
 ---
@@ -66,8 +70,10 @@ flyway.locations=filesystem:./db/migrations
 |`/api/surfers`|GET|Get all surfer entries|
 |`/api/surfers`|POST|Add new surfer entry|
 |`/api/surfers/predict`|GET|Predict surfer count|
-|`/api/conditions/water-temperature`|GET|Get latest water temperature|
 |`/api/conditions/weather`|GET|Get latest weather conditions|
+|`/api/conditions/water-temperature`|GET|Get latest water temperature|
+|`/api/conditions/water/history`|GET|Get historical data on water level and flow|
+|`/api/conditions/water`|GET|Get latest water level and flow|
 
 
 ---
@@ -93,6 +99,8 @@ DB = Neon Postgres Cloud Database
 |Key|Value|
 |---|-----|
 |DATABASE_URL|Postgres URL for Go app (Neon)|
+|PEGELALARM_API_URL|Pegelalarm API|
+|HND_BAYERN_URL|Hochwassernachrichtendienst Bayern Website|
 |FLYWAY_URL|JDBC URL for Flyway (Neon)|
 |FLYWAY_USER|neondb_owner|
 |FLYWAY_PASSWORD|password|
@@ -132,12 +140,12 @@ make migrate-prod
         +--------------------+
                     |
                     v
-        +--------------------------+
-        | Fetch current conditions |
-        | - Air Temp (OpenWeather)|
-        | - Water Temp (API)      |
-        | - Weather Condition     |
-        +--------------------------+
+        +---------------------------------------+
+        | Fetch current conditions              |
+        | - Air Temp (OpenWeather)              |
+        | - Water Temp (API)                    |
+        | - Weather Condition  (OpenWeather)    |
+        +---------------------------------------+
                     |
                     v
         +-----------------------------+

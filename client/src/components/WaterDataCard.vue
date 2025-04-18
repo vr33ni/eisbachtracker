@@ -5,12 +5,27 @@
       🚨 {{ t('lowTideAlert') }}
     </div>
 
+    <!-- Water Level -->
     <p class="text-md text-gray-700 dark:text-gray-300">
-      🌊 {{ t('waterLevel') }}: {{ waterLevelText }}
+      💧 {{ t('waterLevel') }}:
+      <span v-if="waterDataLoading || currentWaterLevel === null">Loading...</span>
+      <span v-else>{{ currentWaterLevel }} cm</span>
     </p>
+
+    <!-- Water Flow -->
     <p class="text-md text-gray-700 dark:text-gray-300">
-      💧 {{ t('waterFlow') }}: {{ waterFlowText }}
+      🌊 {{ t('waterFlow') }}:
+      <span v-if="waterDataLoading || currentWaterFlow === null">Loading...</span>
+      <span v-else>{{ currentWaterFlow }} m³/s</span>
     </p>
+
+    <!-- Water Data Timestamp -->
+    <p v-if="requestDate" class="text-xs text-gray-500">
+      ⏱️ {{ t('requestDate') }}: {{ requestDate }}
+    </p>
+
+    <!-- Optional Separator -->
+    <hr class="border-t border-gray-300 dark:border-gray-700 my-2" />
 
     <!-- Temperature -->
     <p class="text-md text-gray-700 dark:text-gray-300">
@@ -23,20 +38,22 @@
       </span>
       <span v-else>
         {{ waterTemperature }} °C
-        <span
-          v-if="cachedAgeMinutes !== null && cachedAgeMinutes >= 0"
-          class="text-xs text-gray-500 ml-2"
-        >
-          ({{ t('cachedAgo', { minutes: cachedAgeMinutes }) }})
-        </span>
       </span>
+    </p>
+
+    <!-- Cached Age -->
+    <p v-if="cachedAgeMinutes !== null && cachedAgeMinutes >= 0" class="text-xs text-gray-500">
+      💾 {{ t('cachedAgo', { minutes: cachedAgeMinutes }) }}
     </p>
 
     <!-- Expandable Chart -->
     <ExpandableCard :title="`📈 ${t('waterChartTitle')}`">
-      <WaterChartCard :labels="chartLabels" :values="chartValues" />
+      <WaterChartCard :labels="chartLabels" :values="chartValues" :mode="mode"
+        @update:mode="emit('update:mode', $event)" />
+
     </ExpandableCard>
   </div>
+
 </template>
 
 <script setup lang="ts">
@@ -47,8 +64,9 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 
 defineProps<{
-  waterLevelText: string
-  waterFlowText: string
+  currentWaterLevel: number | null
+  currentWaterFlow: number | null
+  requestDate: Date | string
   showWaterLevelAlert: boolean
   waterTemperature: number | null
   waterTemperatureLoading: boolean
@@ -56,6 +74,12 @@ defineProps<{
   cachedAgeMinutes: number | null
   chartLabels: string[]
   chartValues: number[]
+  mode: 'hourly' | 'daily'
+  waterDataLoading: boolean
+}>()
+
+const emit = defineEmits<{
+  (e: 'update:mode', value: 'hourly' | 'daily'): void
 }>()
 
 </script>

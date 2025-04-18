@@ -5,7 +5,17 @@ import (
 	"net/http"
 )
 
-func GetCurrentWeather() (*WeatherData, error) {
+type AirService struct{}
+
+func NewAirService() *AirService {
+	return &AirService{}
+}
+
+type AirDataProvider interface {
+	GetCurrentWeather() (*WeatherData, error)
+}
+
+func (ws *AirService) GetCurrentWeather() (*WeatherData, error) {
 	url := "https://api.open-meteo.com/v1/forecast?latitude=48.137154&longitude=11.576124&current_weather=true"
 
 	resp, err := http.Get(url)

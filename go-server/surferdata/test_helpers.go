@@ -12,6 +12,7 @@ func setupTestService(t *testing.T) *Service {
 
 	db := testutils.SetupTestDB(t)
 	waterService := conditions.NewWaterService()
+	airService := conditions.NewAirService()
 
-	return NewService(db, waterService)
+	return NewService(db, waterService, airService)
 }

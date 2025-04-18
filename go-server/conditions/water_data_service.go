@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"encoding/csv"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -12,74 +11,73 @@ import (
 	"net/url"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
-type WaterService struct{}
-
-func NewWaterService() *WaterService {
-	return &WaterService{}
+type WaterDataService struct {
+	cacheLock     sync.Mutex
+	lastWaterTemp *float64
+	lastFetched   time.Time
+	cacheDuration time.Duration
 }
 
-type WaterConditions struct {
-	Level float64
-	Flow  float64
+func NewWaterService() *WaterDataService {
+	return &WaterDataService{
+		cacheDuration: 60 * time.Minute,
+	}
+}
+
+type WaterLevelAndFlow struct {
+	Level       float64
+	Flow        float64
+	RequestDate string
+}
+
+type PegelAlarmResponse struct {
+	Payload struct {
+		Stations []struct {
+			Data []struct {
+				RequestDate string  `json:"requestDate"`
+				Value       float64 `json:"value"`
+			} `json:"data"`
+		} `json:"stations"`
+	} `json:"payload"`
 }
 
 // --- Interface
 type WaterDataProvider interface {
-	GetCurrentWeather() (*WeatherData, error)
 	GetCachedWaterTemperature() (float64, error)
-	GetLatestWaterTemperature() (float64, error) // <-- Add this line
-	GetCurrentWaterConditions() (float64, float64, error)
+	GetLatestWaterTemperature() (float64, error)
+	GetLatestWaterLevelAndFlow() (*WaterLevelAndFlow, error)
 }
 
 // --- API Methods
 
-func (ws *WaterService) GetCurrentWeather() (*WeatherData, error) {
-	return GetCurrentWeather()
-}
+func (ws *WaterDataService) GetCachedWaterTemperature() (float64, error) {
+	ws.cacheLock.Lock()
+	defer ws.cacheLock.Unlock()
 
-func (ws *WaterService) GetCachedWaterTemperature() (float64, error) {
-	return GetCachedWaterTemperature()
-}
+	if ws.lastWaterTemp != nil && time.Since(ws.lastFetched) < ws.cacheDuration {
+		return *ws.lastWaterTemp, nil
+	}
 
-func (ws *WaterService) GetCurrentWaterConditions() (float64, float64, error) {
-	url := os.Getenv("PEGEL_ALARM_API_URL")
-
-	resp, err := http.Get(url)
+	temp, err := ws.GetLatestWaterTemperature()
 	if err != nil {
-		return 0, 0, err
-	}
-	defer resp.Body.Close()
-
-	var data struct {
-		Payload struct {
-			Stations []struct {
-				Data []struct {
-					Value float64 `json:"value"`
-				} `json:"data"`
-			} `json:"stations"`
-		} `json:"payload"`
+		if ws.lastWaterTemp != nil {
+			return *ws.lastWaterTemp, nil
+		}
+		return 0, err
 	}
 
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return 0, 0, err
-	}
-
-	if len(data.Payload.Stations) == 0 || len(data.Payload.Stations[0].Data) < 2 {
-		return 0, 0, errors.New("invalid response structure")
-	}
-
-	level := data.Payload.Stations[0].Data[0].Value
-	flow := data.Payload.Stations[0].Data[1].Value
-
-	return level, flow, nil
+	ws.lastWaterTemp = &temp
+	ws.lastFetched = time.Now()
+	return temp, nil
 }
 
 // --- Public Fetching Method ---
 
-func (ws *WaterService) GetLatestWaterTemperature() (float64, error) {
+func (ws *WaterDataService) GetLatestWaterTemperature() (float64, error) {
 	client, err := createHTTPClient()
 	if err != nil {
 		return 0, fmt.Errorf("creating HTTP client: %w", err)
@@ -237,4 +235,58 @@ func parseLatestWaterTemperature(rows [][]string) (float64, error) {
 	var temp float64
 	fmt.Sscanf(tempStr, "%f", &temp)
 	return temp, nil
+}
+
+// --- PegelAlarm API Fetching ---
+func (ws *WaterDataService) fetchPegelAlarmData() (*PegelAlarmResponse, error) {
+	client := &http.Client{Timeout: 10 * time.Second}
+	url := os.Getenv("PEGELALARM_API_URL")
+	res, err := client.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch pegelalarm data: %w", err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("pegelalarm returned non-200 status: %d", res.StatusCode)
+	}
+
+	var parsed PegelAlarmResponse
+	if err := json.NewDecoder(res.Body).Decode(&parsed); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	return &parsed, nil
+}
+
+// Fetches the latest water level and flow from PegelAlarm
+func (ws *WaterDataService) GetLatestWaterLevelAndFlow() (*WaterLevelAndFlow, error) {
+	data, err := ws.fetchPegelAlarmData() // ← Your PegelAlarm fetcher
+	if err != nil {
+		return nil, err
+	}
+
+	stations := data.Payload.Stations
+	if len(stations) == 0 || len(stations[0].Data) < 2 {
+		return nil, fmt.Errorf("invalid PegelAlarm response")
+	}
+
+	level := stations[0].Data[0].Value
+	flow := stations[0].Data[1].Value
+	rawDate := stations[0].Data[0].RequestDate
+	parsedDate, err := time.Parse("02.01.2006T15:04:05-0700", rawDate)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse requestDate: %w", err)
+	}
+
+	return &WaterLevelAndFlow{
+		Level:       level,
+		Flow:        flow,
+		RequestDate: parsedDate.Format(time.RFC3339), // Converts to "2025-04-17T22:43:04+02:00"
+	}, nil
+
+}
+
+func (ws *WaterDataService) GetHistoricalWaterLevels() ([]HistoricalWaterLevel, error) {
+	return ScrapeWaterLevelHistory()
 }
