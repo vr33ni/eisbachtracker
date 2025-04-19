@@ -30,6 +30,7 @@ Powered by:
 
 ```cmd
 //.env
+//see .env.example for reference
 ENV=local
 DATABASE_URL=postgres://your-username@localhost:5432/eisbach 
 EGELALARM_API_URL=Pegelalarm API
@@ -47,7 +48,6 @@ flyway.password=
 flyway.schemas=public 
 flyway.locations=filesystem:./db/migrations
 ```
-
 
 ---
 

@@ -1,4 +1,11 @@
 {
+  "loadingMessages": [
+    "🔮 Observando el río...",
+    "📈 Procesando los datos...",
+    "🐟 Preguntando a los peces...",
+    "📷 Revisando las cámaras del río...",
+    "🌊 Sintiendo las vibras..."
+  ],
   "title": "Rastreador del Eisbach",
   "surferSpotter": "Contador de Surfistas",
   "refresh": "Actualizar Datos",

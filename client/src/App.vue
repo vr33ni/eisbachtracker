@@ -1,6 +1,6 @@
 <template>
   <div id="app"
-    class="min-h-screen bg-gradient-to-b from-blue-100 to-white dark:from-gray-900 dark:to-gray-800 px-0 sm:px-4 py-6 sm:py-10">
+    class="min-h-screen bg-gradient-to-b from-blue-100 to-white dark:from-blue-950 dark:to-gray-900 px-0 sm:px-4 py-6 sm:py-10">
     <!-- Global Refresh Overlay -->
     <GlobalLoadingOverlay :is-refreshing="isRefreshing" :rotating-message="rotatingMessage"
       :cancel-refresh="cancelRefresh" />
@@ -9,10 +9,12 @@
     <div class="w-full max-w-2xl sm:mx-auto space-y-6">
 
       <!-- Language Switcher -->
-      <LanguageSwitcher />
+      <div class="flex justify-end">
+        <LanguageSwitcher />
+      </div>
 
       <!-- Header + last updated -->
-      <div class="text-center space-y-1">
+      <section aria-label="Header Info" class="text-center space-y-2">
         <h1 class="text-4xl sm:text-5xl font-bold tracking-tight text-blue-600 dark:text-blue-300">
           {{ $t('title') }}
         </h1>
@@ -21,31 +23,36 @@
         </div>
 
 
-      </div>
-
+      </section>
 
       <!-- Water Data Card -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
-        <WaterDataCard :current-water-level="currentWaterLevel" :current-water-flow="currentWaterFlow"
-          :request-date="requestDate" :show-water-level-alert="showWaterLevelAlert"
-          :water-temperature="waterTemperature" :water-temperature-loading="waterTemperatureLoading"
-          :water-temperature-error="waterTemperatureError" :chart-labels="chartLabels" :chart-values="chartValues"
-          :cached-age-minutes="cachedAgeMinutes" :water-data-loading="waterDataLoading" v-model:mode="chartViewMode" />
-      </div>
+      <section aria-label="Water Conditions">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6">
+          <WaterDataCard :current-water-level="currentWaterLevel" :current-water-flow="currentWaterFlow"
+            :request-date="requestDate" :show-water-level-alert="showWaterLevelAlert"
+            :water-temperature="waterTemperature" :water-temperature-loading="waterTemperatureLoading"
+            :water-temperature-error="waterTemperatureError" :chart-labels="chartLabels" :chart-values="chartValues"
+            :cached-age-minutes="cachedAgeMinutes" :water-data-loading="waterDataLoading"
+            v-model:mode="chartViewMode" />
+        </div>
+      </section>
 
       <!-- Surfer Spotter Card -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6 space-y-4">
-        <h2 class="text-2xl font-semibold text-blue-700 dark:text-blue-300">🧍 {{ $t('surferSpotter') }}</h2>
+      <section aria-label="Surfer Spotter">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 sm:p-6 space-y-4">
+          <h2 class="text-2xl font-semibold text-blue-700 dark:text-blue-300">🧍 {{ $t('surferSpotter') }}</h2>
 
-        <SurferPrediction :prediction-loading="predictionLoading" :prediction-error="predictionError"
-          :current-hour-prediction="currentHourPrediction" :prediction-has-been-fetched="predictionHasBeenFetched" />
+          <SurferPrediction :prediction-loading="predictionLoading" :prediction-error="predictionError"
+            :current-hour-prediction="currentHourPrediction" :prediction-has-been-fetched="predictionHasBeenFetched" />
 
 
-        <SurferEntries :todaysEntries="todaysEntries" :historyEntries="historyEntries" :entriesLoading="entriesLoading"
-          :entriesError="entriesError" :entriesLoadingMessage="entriesLoadingMessage" />
+          <SurferEntries :todaysEntries="todaysEntries" :historyEntries="historyEntries"
+            :entriesLoading="entriesLoading" :entriesError="entriesError"
+            :entriesLoadingMessage="entriesLoadingMessage" />
 
-        <SurferEntriesForm :submitting="submitting" v-model="surferCountRaw" @submit="submitSurferCount" />
-      </div>
+          <SurferEntriesForm :submitting="submitting" v-model="surferCountRaw" @submit="submitSurferCount" />
+        </div>
+      </section>
 
       <!-- Refresh Button -->
       <div class="flex justify-center">
@@ -74,26 +81,19 @@ import { useSurferEntries } from '@/composables/useSurferEntries'
 import { useWaterLevelData } from '@/composables/useWaterLevelData'
 import { useLoadingMessages } from '@/composables/useLoadingMessages'
 
-const { t } = useI18n()
+const { t, tm } = useI18n()
 
 
 const surferCountRaw = ref('')
 const submitting = ref(false)
 
 
-const messages = [
-  '🔮 Watching the river...',
-  '📈 Crunching the numbers...',
-  '🐟 Asking fish for advice...',
-  '📷 Checking river cams...',
-  '🌊 Feeling the vibes...',
-]
-
+const messages = computed(() => tm('loadingMessages') as string[] | undefined)
 const {
   loadingMessage: rotatingMessage,
   startRotating,
   stopRotating
-} = useLoadingMessages(messages)
+} = useLoadingMessages(messages, 1000)
 
 const isRefreshing = ref(false)
 
@@ -183,7 +183,7 @@ const {
   fetchWaterData,
   fetchHistoricalWaterData,
   waterDataLoading,
-  chartViewMode, 
+  chartViewMode,
 } = useWaterLevelData()
 
 
