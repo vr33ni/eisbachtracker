@@ -1,4 +1,11 @@
 {
+  "loadingMessages": [
+    "🔮 Beobachte den Fluss...",
+    "📈 Werte die Zahlen aus...",
+    "🐟 Frage die Fische um Rat...",
+    "📷 Überprüfe die Flusskameras...",
+    "🌊 Spüre die Vibes..."
+  ],
   "title": "Eisbach Tracker",
   "surferSpotter": "Surfer-Zähler",
   "refresh": "Aktualisieren",

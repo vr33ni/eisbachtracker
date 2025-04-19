@@ -1,4 +1,11 @@
 {
+  "loadingMessages": [
+    "🔮 Watching the river...",
+    "📈 Crunching the numbers...",
+    "🐟 Asking fish for advice...",
+    "📷 Checking river cams...",
+    "🌊 Feeling the vibes..."
+  ],
   "title": "Eisbach Tracker",
   "surferSpotter": "Surfer Spotter",
   "refresh": "Refresh Data",

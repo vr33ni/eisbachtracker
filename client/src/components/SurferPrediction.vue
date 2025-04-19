@@ -25,11 +25,11 @@
 </template>
 
 <script setup lang="ts">
-import { watch, onMounted, onUnmounted } from 'vue'
+import { watch, onMounted, onUnmounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLoadingMessages } from '@/composables/useLoadingMessages'
 
-const { t } = useI18n()
+const { t, tm } = useI18n()
 
 const props = defineProps<{
   predictionLoading: boolean
@@ -38,17 +38,13 @@ const props = defineProps<{
   predictionHasBeenFetched: boolean
 }>()
 
+const messages = computed(() => tm('loadingMessages') as string[])
+
 const {
   loadingMessage: rotatingMessage,
   startRotating,
   stopRotating,
-} = useLoadingMessages([
-  '🔮 Watching the river...',
-  '🤔 Estimating surf hype...',
-  '📈 Crunching the numbers...',
-  '🐟 Asking fish for advice...',
-  '📷 Checking river cams...',
-])
+} = useLoadingMessages(messages, 3000)
 
 // ⏱ Start / stop messages based on predictionLoading prop
 watch(
