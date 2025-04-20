@@ -9,7 +9,7 @@ export function useGlobalLoadingOverlay(messages: string[]) {
     loadingMessage,
     startRotating,
     stopRotating
-  } = useLoadingMessages(messages)
+  } = useLoadingMessages(ref(messages))
 
   const start = () => {
     isRefreshing.value = true
