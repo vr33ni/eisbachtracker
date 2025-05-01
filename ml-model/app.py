@@ -22,7 +22,8 @@ def predict():
     }
     features = pd.DataFrame([feature_dict])  # Create a DataFrame with one row
     prediction = model.predict(features)
-    return jsonify({"surfer_count": int(prediction[0])})
+    surfer_count = max(0, int(prediction[0]))  # Ensure the count is at least 0
+    return jsonify({"surfer_count": surfer_count})
 
 if __name__ == "__main__":
     app.run(debug=True)
