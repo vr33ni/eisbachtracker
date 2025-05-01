@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import joblib
 import numpy as np
 import pandas as pd  # Import pandas
+import os 
 
 app = Flask(__name__)
 model = joblib.load("surfer_prediction_model.pkl")
@@ -32,4 +33,4 @@ def predict():
     return jsonify({"surfer_count": surfer_count})
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5001)))
