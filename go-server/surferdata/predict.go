@@ -2,6 +2,7 @@ package surferdata
 
 import (
 	"context"
+	"fmt"
 	"math"
 
 	"github.com/vr33ni/eisbachtracker-pwa/go-server/conditions"
@@ -41,22 +42,39 @@ func (s *Service) basePredictionByHour(hour int) (float64, error) {
 }
 
 func (s *Service) PredictSurferCountAdvanced(params PredictionParams) (int, error) {
+	// Step 1: Get the base prediction by hour (rule-based fallback)
 	base, err := s.basePredictionByHour(params.Hour)
 	if err != nil {
 		return 0, err
 	}
 
+	// Step 2: Calculate the rule-based factor
 	weatherData := &conditions.WeatherData{
 		Temp:      safeFloat(params.AirTemp),
 		Condition: params.WeatherCondition,
 	}
-
 	factor := calculateFactor(params.Hour, params.WaterTemp, weatherData, params.WaterLevel, params.WaterFlow)
-
-	pred := int(math.Round(base * factor))
-	if pred < 0 {
-		pred = 0
+	ruleBasedPrediction := int(math.Round(base * factor))
+	if ruleBasedPrediction < 0 {
+		ruleBasedPrediction = 0
 	}
 
-	return pred, nil
+	// Step 3: Call the ML-based prediction
+	mlParams := MLPredictionParams{
+		Hour:             params.Hour,
+		WaterTemp:        safeFloat(params.WaterTemp),
+		AirTemp:          safeFloat(params.AirTemp),
+		WaterLevel:       params.WaterLevel,
+		WeatherCondition: params.WeatherCondition,
+	}
+	mlPrediction, err := s.PredictSurferCountML(mlParams)
+	if err != nil {
+		// Log the error and fall back to rule-based prediction
+		fmt.Printf("ML prediction failed: %v\n", err)
+		return ruleBasedPrediction, nil
+	}
+
+	// Step 4: Combine the predictions (optional)
+	// For now, we return the ML prediction
+	return mlPrediction, nil
 }
