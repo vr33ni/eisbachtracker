@@ -118,11 +118,21 @@ func handlePrediction(airService conditions.AirDataProvider, service *surferdata
 			}
 		}
 
+		// ✅ Fetch the water level
+		var waterLevel float64
+		if latestWater, err := waterService.GetLatestWaterLevelAndFlow(); err == nil {
+			waterLevel = latestWater.Level
+		} else {
+			log.Printf("❌ Failed to fetch water level: %v", err)
+			waterLevel = 0 // Fallback to 0 if water level cannot be retrieved
+		}
+
 		prediction, err := service.PredictSurferCountAdvanced(surferdata.PredictionParams{
 			Hour:             hour,
 			WaterTemp:        waterTemp,
 			AirTemp:          airTemp,
 			WeatherCondition: conditionStr,
+			WaterLevel:       waterLevel,
 		})
 		if err != nil {
 			http.Error(w, "Could not compute prediction: "+err.Error(), http.StatusInternalServerError)
@@ -134,6 +144,7 @@ func handlePrediction(airService conditions.AirDataProvider, service *surferdata
 			"water_temperature": waterTemp,
 			"air_temperature":   airTemp,
 			"weather_condition": conditionStr,
+			"water_level":       waterLevel,
 			"prediction":        prediction,
 		})
 	}

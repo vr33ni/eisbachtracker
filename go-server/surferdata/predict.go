@@ -75,6 +75,6 @@ func (s *Service) PredictSurferCountAdvanced(params PredictionParams) (int, erro
 	}
 
 	// Step 4: Combine the predictions (optional)
-	// For now, we return the ML prediction if available
+	// For now, we return the ML prediction
 	return mlPrediction, nil
 }
