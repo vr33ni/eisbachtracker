@@ -18,22 +18,24 @@ df = pd.DataFrame(data)
 # Add surfer_count with tendencies
 def generate_surfer_count(row):
     base_count = np.random.randint(0, 10)  # Base random count
-    if row["weather_condition"] == "sunny":
-        base_count += 5  # More surfers on sunny days
-    if row["weather_condition"] == "snow":
-        base_count -= 3  # More surfers on sunny days
-    if row["air_temp"] > 20:
-        base_count += 5  # More surfers in warmer air temperatures
-    if row["air_temp"] < 0:
-        base_count -= 10  # More surfers in warmer air temperatures
-    if row["water_temp"] > 15:
-        base_count += 5  # More surfers in warmer water temperatures
-    if row["water_temp"] < 5:
-        base_count -= 8  # More surfers in warmer water temperatures
+    if row["water_level"] < 130:
+        return 0  #  Not surfable
     if row["water_level"] > 145:
         base_count += 5  # More surfers with higher water levels
     if row["water_level"] < 140:
-        base_count -= 8  # More surfers with higher water levels
+        base_count -= 8  # Less surfers with lower water levels
+    if row["weather_condition"] == "sunny":
+        base_count += 5  # More surfers on sunny days
+    if row["weather_condition"] == "snow":
+        base_count -= 3  # Less surfers on winter days
+    if row["air_temp"] > 20:
+        base_count += 5  # More surfers in warmer air temperatures
+    if row["air_temp"] < 0:
+        base_count -= 10  # Less surfers in colder air temperatures
+    if row["water_temp"] > 15:
+        base_count += 5  # More surfers in warmer water temperatures
+    if row["water_temp"] < 5:
+        base_count -= 8  # Less surfers in lower water temperatures
     # if row["water_flow"] > 25:
     #     base_count += 5  # More surfers with higher water flow; water flow kinda equivalent with higher water level
     if 11 <= row["hour"] <= 14 or 6 <= row["hour"] <= 7 or 17 <= row["hour"] <= 19:  # Lunch/afternoon or early morning

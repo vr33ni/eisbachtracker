@@ -21,8 +21,14 @@ def predict():
         "weather_condition_stormy": data.get("weather_condition_stormy", 0),
     }
     features = pd.DataFrame([feature_dict])  # Create a DataFrame with one row
-    prediction = model.predict(features)
-    surfer_count = max(0, int(prediction[0]))  # Ensure the count is at least 0
+
+    # Enforce the rule: water_level < 130 means no surfers
+    if feature_dict["water_level"] < 130:
+        surfer_count = 0
+    else:
+        prediction = model.predict(features)
+        surfer_count = max(0, int(prediction[0]))  # Ensure the count is at least 0
+
     return jsonify({"surfer_count": surfer_count})
 
 if __name__ == "__main__":
