@@ -30,6 +30,11 @@ go-server/.env
 go-server/coverage.out
 go-server/main
 
+# ml-model
+*.csv
+*.pkl
+ml-model/ml-env/
+
 # macOS
 .DS_Store
 
