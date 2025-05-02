@@ -2,7 +2,7 @@
 
 A web app to track surfer activity and water conditions at the Eisbach wave in Munich 🌊🏄‍♂️
 
-This repository contains both the frontend (Vue.js) and backend (Go) of the Eisbachtracker project.
+This repository contains a frontend (Vue.js), a backend (Go) and a machine learning model (Python).
 
 ---
 
@@ -10,6 +10,7 @@ This repository contains both the frontend (Vue.js) and backend (Go) of the Eisb
 
 ├── frontend/ → Vue 3 client (Vite) for the web interface  
 ├── go-server/ → Go backend API with PostgreSQL & Flyway  
+├── ml-model/ → Flask API based on a linear regression model to create a prediction
 └── README.md → This file
 
 ---
