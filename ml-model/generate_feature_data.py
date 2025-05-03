@@ -3,6 +3,9 @@ import pandas as pd
 from bs4 import BeautifulSoup
 import requests
 import numpy as np
+from openmeteo_requests import Client
+import requests_cache
+from retry_requests import retry
 
 # Function to process temperature data
 def process_temperature_data(folder_path):
@@ -73,8 +76,51 @@ def expand_temperature_data(temperature_data):
     expanded_data["hour"] = list(range(24)) * len(temperature_data)
     return expanded_data
 
-# Combine temperature and water level data
-def combine_temperature_and_water_level(temp_folder, water_level_url):
+
+
+# Function to fetch weather data
+def fetch_weather_data():
+    """Fetch weather data from Open-Meteo API."""
+    cache_session = requests_cache.CachedSession('.cache', expire_after=-1)
+    retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
+    openmeteo = Client(session=retry_session)
+
+    # Define API parameters
+    url = "https://archive-api.open-meteo.com/v1/archive"
+    params = {
+        "latitude": 48.137154,
+        "longitude": 11.576124,
+        "start_date": "2024-01-01",  # Adjust as needed
+        "end_date": "2024-12-31",    # Adjust as needed
+        "hourly": ["temperature_2m", "weather_code"]
+    }
+
+    # Fetch weather data
+    responses = openmeteo.weather_api(url, params=params)
+    response = responses[0]  # Assuming single location
+
+    # Process hourly data
+    hourly = response.Hourly()
+    weather_data = pd.DataFrame({
+        "date": pd.date_range(
+            start=pd.to_datetime(hourly.Time(), unit="s", utc=True),
+            end=pd.to_datetime(hourly.TimeEnd(), unit="s", utc=True),
+            freq=pd.Timedelta(seconds=hourly.Interval()),
+            inclusive="left"
+        ),
+        "hour": pd.to_datetime(hourly.Time(), unit="s", utc=True).hour,
+        "air_temp": hourly.Variables(0).ValuesAsNumpy(),
+        "weather_code": hourly.Variables(1).ValuesAsNumpy()
+    })
+
+    # Ensure date column is in local time (optional)
+    weather_data["date"] = weather_data["date"].dt.tz_convert(None)
+    return weather_data
+
+
+
+# Combine temperature, water level, and weather data
+def combine_temperature_and_water_level_with_weather(temp_folder, water_level_url):
     try:
         print("Processing temperature data...")
         temperature_data = process_temperature_data(temp_folder)
@@ -114,12 +160,25 @@ def combine_temperature_and_water_level(temp_folder, water_level_url):
             print("Combined data is empty! Check your merge logic.")
             return
 
-        print("Adding dummy columns for air_temp and weather_condition...")
-        combined_data["air_temp"] = np.random.uniform(-10, 35, len(combined_data))  # Random air temperature
-        combined_data["weather_condition"] = np.random.choice(
-            ["sunny", "cloudy", "rainy", "snow", "stormy"], len(combined_data)
-        )
+        print("Fetching weather data...")
+        weather_data = fetch_weather_data()
+        print(f"Weather data shape: {weather_data.shape}")
 
+        print("Merging weather data with combined data...")
+        combined_data = pd.merge(
+            combined_data,
+            weather_data,
+            on=["date", "hour"],
+            how="left"  # Use "left" to keep all rows from combined_data
+        )
+        print(f"Final combined data shape: {combined_data.shape}")
+
+        print("Replacing dummy columns with actual weather data...")
+        import pdb; pdb.set_trace()
+
+        combined_data["air_temp"] = weather_data["air_temp"]
+        combined_data["weather_condition"] = weather_data["weather_code"]
+        combined_data = combined_data.drop(columns=["weather_code"])        
         print("Saving combined data to CSV...")
         combined_data.to_csv("combined_feature_data.csv", index=False)
         print("Combined feature data saved to combined_feature_data.csv")
@@ -135,7 +194,7 @@ if __name__ == "__main__":
     water_level_url = "https://www.hnd.bayern.de/pegel/isar/muenchen-himmelreichbruecke-16515005/tabelle?methode=wasserstand&days=365"  # Replace with the correct URL
 
     try:
-        combined_data = combine_temperature_and_water_level(folder_path, water_level_url)
+        combined_data = combine_temperature_and_water_level_with_weather(folder_path, water_level_url)
         if combined_data is not None:
             print("Script executed successfully!")
     except Exception as e:
