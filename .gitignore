@@ -33,6 +33,7 @@ go-server/main
 # ml-model
 *.csv
 ml-model/ml-env/
+.cache.sqlite
 
 # macOS
 .DS_Store

@@ -18,7 +18,7 @@ This repository contains a frontend (Vue.js), a backend (Go) and a machine learn
 ## About the project
 
 - Users can view current water levels, temperature, and recent surfer counts.
-- Surfer activity predictions based on recent data and water temperature.
+- Surfer activity predictions based on recent data and water temperature. While the prediction model uses real-life water level, water temperature data and weather data, the amount of surfers per hour of the day was generated random, but following certain rules. The project showcases the potential of forecasting the crowd level based on weather and water conditions combined with user input regarding the amount of surfers.
 - Data is collected and stored in a PostgreSQL database (Neon).
 - The backend is hosted on Render, the frontend is deployed on GitHub Pages.
 
@@ -30,6 +30,7 @@ Check the respective READMEs for detailed setup and usage instructions:
 
 - [Frontend README](./client/README.md) — Vue.js Client
 - [Go Backend README](./go-server/README.md) — Go API + Database Migrations + Render Deploy
+- [Ml Model README](./ml-model/README.md) — Linear Regression Model + Flask API
 
 ---
 
