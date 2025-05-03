@@ -117,6 +117,61 @@ def fetch_weather_data():
     weather_data["date"] = weather_data["date"].dt.tz_convert(None)
     return weather_data
 
+def generate_surfer_count(row):
+    base_count = np.random.randint(0, 10)  # Base random count
+
+    # Weather code mapping: Adjust surfer count based on weather conditions
+    weather_code_impact = {
+        0: 5,   # Clear skies (sunny) -> More surfers
+        1: 3,   # Mainly clear -> Slightly more surfers
+        2: 0,   # Partly cloudy -> Neutral
+        3: -2,  # Overcast -> Slightly fewer surfers
+        45: -5, # Fog -> Fewer surfers
+        48: -5, # Depositing rime fog -> Fewer surfers
+        51: -3, # Drizzle: Light -> Fewer surfers
+        53: -5, # Drizzle: Moderate -> Fewer surfers
+        55: -8, # Drizzle: Dense -> Much fewer surfers
+        61: -3, # Rain: Slight -> Fewer surfers
+        63: -5, # Rain: Moderate -> Fewer surfers
+        65: -8, # Rain: Heavy -> Much fewer surfers
+        80: -3, # Showers: Slight -> Fewer surfers
+        81: -5, # Showers: Moderate -> Fewer surfers
+        82: -8, # Showers: Violent -> Much fewer surfers
+        95: -5, # Thunderstorm: Slight -> Fewer surfers
+        96: -8, # Thunderstorm: Moderate -> Much fewer surfers
+        99: -10 # Thunderstorm: Severe -> Very few surfers
+    }
+
+    # Adjust base_count based on weather code
+    weather_impact = weather_code_impact.get(row["weather_condition"], 0)  # Default impact is 0
+    base_count += weather_impact
+
+    # Adjust based on water level
+    if row["water_level"] < 130:
+        return 0  # Not surfable
+    if row["water_level"] > 145:
+        base_count += 5  # More surfers with higher water levels
+    if row["water_level"] < 140:
+        base_count -= 8  # Less surfers with lower water levels
+
+    # Adjust based on air temperature
+    if row["air_temp"] > 20:
+        base_count += 5  # More surfers in warmer air temperatures
+    if row["air_temp"] < 0:
+        base_count -= 10  # Less surfers in colder air temperatures
+
+    # Adjust based on water temperature
+    if row["water_temp"] > 15:
+        base_count += 5  # More surfers in warmer water temperatures
+    if row["water_temp"] < 5:
+        base_count -= 8  # Less surfers in colder water temperatures
+
+    # Adjust based on peak surfing hours
+    if 11 <= row["hour"] <= 14 or 6 <= row["hour"] <= 7 or 17 <= row["hour"] <= 19:
+        base_count += 5  # Peak surfing hours
+
+    # Ensure count is between 0 and 30
+    return max(0, min(base_count, 30))
 
 
 # Combine temperature, water level, and weather data
@@ -177,8 +232,12 @@ def combine_temperature_and_water_level_with_weather(temp_folder, water_level_ur
         import pdb; pdb.set_trace()
 
         combined_data["air_temp"] = weather_data["air_temp"]
+        combined_data.rename(columns={"weather_code": "weather_condition"}, inplace=True)
         combined_data["weather_condition"] = weather_data["weather_code"]
-        combined_data = combined_data.drop(columns=["weather_code"])        
+
+        print("Adding surfer_count column...")
+        combined_data["surfer_count"] = combined_data.apply(generate_surfer_count, axis=1)
+
         print("Saving combined data to CSV...")
         combined_data.to_csv("combined_feature_data.csv", index=False)
         print("Combined feature data saved to combined_feature_data.csv")

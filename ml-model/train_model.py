@@ -4,14 +4,13 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 import joblib
 
-# Load dummy data
-df = pd.read_csv("dummy_surfer_data.csv")
+# Load data
+df = pd.read_csv("combined_feature_and_target_data.csv")
 
 # Ensure all one-hot encoded columns are present
 expected_columns = [
     "hour", "water_temp", "air_temp", "water_level",
-    "weather_condition_cloudy", "weather_condition_rainy",
-    "weather_condition_snow", "weather_condition_stormy"
+    "weather_condition"
 ]
 for col in expected_columns:
     if col not in df.columns:

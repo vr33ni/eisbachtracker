@@ -16,10 +16,8 @@ def predict():
         "water_temp": data["water_temp"],
         "air_temp": data["air_temp"],
         "water_level": data["water_level"],
-        "weather_condition_cloudy": data.get("weather_condition_cloudy", 0),
-        "weather_condition_rainy": data.get("weather_condition_rainy", 0),
-        "weather_condition_snow": data.get("weather_condition_snow", 0),
-        "weather_condition_stormy": data.get("weather_condition_stormy", 0),
+        "weather_condition": data.get("weather_condition"),
+       
     }
     features = pd.DataFrame([feature_dict])  # Create a DataFrame with one row
 
