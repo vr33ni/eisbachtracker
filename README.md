@@ -30,6 +30,8 @@ Check the respective READMEs for detailed setup and usage instructions:
 
 - [Frontend README](./client/README.md) — Vue.js Client
 - [Go Backend README](./go-server/README.md) — Go API + Database Migrations + Render Deploy
+- [Ml Model README](./ml-model/README.md) — Linear Regression Model + Flask API
+
 
 ---
 
