@@ -12,7 +12,7 @@ type PredictionParams struct {
 	Hour             int
 	WaterTemp        *float64
 	AirTemp          *float64
-	WeatherCondition string
+	WeatherCondition int
 	WaterLevel       float64
 	WaterFlow        float64
 }
@@ -41,7 +41,7 @@ func (s *Service) basePredictionByHour(hour int) (float64, error) {
 	return *avg, nil
 }
 
-func (s *Service) PredictSurferCountAdvanced(params PredictionParams) (int, error) {
+func (s *Service) PredictSurferCountAdvanced(params PredictionParams) (interface{}, error) {
 	// Step 1: Get the base prediction by hour (rule-based fallback)
 	base, err := s.basePredictionByHour(params.Hour)
 	if err != nil {
@@ -67,14 +67,29 @@ func (s *Service) PredictSurferCountAdvanced(params PredictionParams) (int, erro
 		WaterLevel:       params.WaterLevel,
 		WeatherCondition: params.WeatherCondition,
 	}
-	mlPrediction, err := s.PredictSurferCountML(mlParams)
+	mlPrediction, explanation, err := s.PredictSurferCountML(mlParams)
 	if err != nil {
-		// Log the error and fall back to rule-based prediction
-		fmt.Printf("ML prediction failed: %v\n", err)
-		return ruleBasedPrediction, nil
+		fmt.Printf("Error predicting surfer count: %v\n", err)
+		return 0, err
+	}
+
+	fmt.Printf("Predicted Surfer Count: %d\n", mlPrediction)
+	fmt.Println("Feature Contributions:")
+	for feature, contribution := range explanation {
+		fmt.Printf("  %s: %.2f\n", feature, contribution)
 	}
 
 	// Step 4: Combine the predictions (optional)
-	// For now, we return the ML prediction
-	return mlPrediction, nil
+	// Combine the response
+	response := map[string]interface{}{
+		"hour":              params.Hour,
+		"water_temperature": safeFloat(params.WaterTemp),
+		"air_temperature":   safeFloat(params.AirTemp),
+		"weather_condition": params.WeatherCondition,
+		"water_level":       params.WaterLevel,
+		"prediction":        mlPrediction,
+		"explanation":       explanation,
+	}
+
+	return response, nil
 }

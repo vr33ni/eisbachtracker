@@ -14,6 +14,7 @@ export function useSurferEntries() {
   const predictionError = ref<string | null>(null)
   const predictionHasBeenFetched = ref(false)
   const currentHourPrediction = ref<number | null>(null)
+  const explanation = ref<Record<string, number> | null>(null) 
 
   const fetchEntries = async () => {
     entriesLoading.value = true
@@ -60,6 +61,8 @@ export function useSurferEntries() {
     predictionLoading.value = true
     predictionError.value = null
     predictionHasBeenFetched.value = false
+    explanation.value = null  
+
 
     try {
       const url = new URL(`${API_BASE_URL}/surfers/predict`)
@@ -75,10 +78,12 @@ export function useSurferEntries() {
 
       const data = res.data as PredictionResponseDto
       currentHourPrediction.value = data.prediction
+      explanation.value = data.explanation 
       return data
     } catch (err) {
       predictionError.value = err instanceof Error ? err.message : 'Failed to fetch prediction'
       currentHourPrediction.value = null
+      explanation.value = null 
       return null
     } finally {
       predictionHasBeenFetched.value = true
@@ -106,6 +111,7 @@ export function useSurferEntries() {
     predictionError,
     predictionHasBeenFetched,
     currentHourPrediction,
+    explanation, 
     todaysEntries,
     historyEntries,
   }

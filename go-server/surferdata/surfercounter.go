@@ -52,7 +52,7 @@ func (s *Service) AddEntry(count int, when time.Time, waterLevel *float64, water
 	weather, err := s.AirService.GetCurrentWeather()
 	if err != nil {
 		log.Println("⚠️ Could not fetch air weather:", err)
-		weather = &conditions.WeatherData{Temp: 0, Condition: "Unknown"}
+		weather = &conditions.WeatherData{Temp: 0, Condition: -1}
 	}
 
 	var waterTemp float64

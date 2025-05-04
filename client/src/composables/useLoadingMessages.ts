@@ -39,7 +39,7 @@ export function useLoadingMessages(messages: Ref<string[] | undefined>, interval
   watchEffect(() => {
     const msgs = getMessages()
     if (msgs.length > 0) {
-      console.log('🌍 Locale switched or messages changed:', msgs)
+      // console.log('🌍 Locale switched or messages changed:', msgs)
       updateMessage()
     }
   })

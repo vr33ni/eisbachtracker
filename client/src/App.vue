@@ -43,8 +43,7 @@
           <h2 class="text-2xl font-semibold text-blue-700 dark:text-blue-300">🧍 {{ $t('surferSpotter') }}</h2>
 
           <SurferPrediction :prediction-loading="predictionLoading" :prediction-error="predictionError"
-            :current-hour-prediction="currentHourPrediction" :prediction-has-been-fetched="predictionHasBeenFetched" />
-
+            :current-hour-prediction="currentHourPrediction" :explanation="explanation || {}" :prediction-has-been-fetched="predictionHasBeenFetched" />
 
           <SurferEntries :todaysEntries="todaysEntries" :historyEntries="historyEntries"
             :entriesLoading="entriesLoading" :entriesError="entriesError"
@@ -167,6 +166,7 @@ const {
   predictionError,
   predictionHasBeenFetched,
   currentHourPrediction,
+  explanation,
   todaysEntries,
   historyEntries,
 } = useSurferEntries()

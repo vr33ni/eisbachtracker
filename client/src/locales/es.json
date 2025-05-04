@@ -38,6 +38,7 @@
   "predictionHeading": "Predicción para la próxima hora",
   "predictedSurfers": "Surfistas predichos:",
   "notEnoughData": "No hay suficientes datos para predecir la multitud",
+  "viewExplanation": "Explanación",
 
   "chart": {
     "waterLevelLabel": "Nivel del agua (cm)",

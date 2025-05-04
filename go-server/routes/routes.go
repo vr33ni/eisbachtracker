@@ -97,6 +97,7 @@ func handlePrediction(airService conditions.AirDataProvider, service *surferdata
 		}
 
 		var waterTemp, airTemp *float64
+		var weatherCondition *int
 
 		// ✅ Use cached water temp
 		if waterTempStr != "" {
@@ -107,15 +108,32 @@ func handlePrediction(airService conditions.AirDataProvider, service *surferdata
 			waterTemp = &latest
 		}
 
-		if airTempStr != "" {
+		// ✅ Parse airTempStr and conditionStr together
+		if airTempStr != "" && conditionStr != "" {
 			if t, err := strconv.ParseFloat(airTempStr, 64); err == nil {
 				airTemp = &t
+			} else {
+				http.Error(w, "Invalid air_temperature", http.StatusBadRequest)
+				return
+			}
+
+			if c, err := strconv.Atoi(conditionStr); err == nil {
+				weatherCondition = &c
+			} else {
+				http.Error(w, "Invalid weather_condition", http.StatusBadRequest)
+				return
 			}
 		} else if current, err := airService.GetCurrentWeather(); err == nil {
-			airTemp = &current.Temp
-			if conditionStr == "" {
-				conditionStr = current.Condition
+			if airTempStr == "" {
+				airTemp = &current.Temp
 			}
+			if conditionStr == "" {
+				weatherCondition = &current.Condition
+			}
+		} else {
+			log.Println("⚠️ Could not fetch current weather:", err)
+			airTemp = nil
+			weatherCondition = nil
 		}
 
 		// ✅ Fetch the water level
@@ -127,11 +145,18 @@ func handlePrediction(airService conditions.AirDataProvider, service *surferdata
 			waterLevel = 0 // Fallback to 0 if water level cannot be retrieved
 		}
 
+		var weatherConditionValue int
+		if weatherCondition != nil {
+			weatherConditionValue = *weatherCondition
+		} else {
+			weatherConditionValue = -1 // Default value for unknown weather condition
+		}
+
 		prediction, err := service.PredictSurferCountAdvanced(surferdata.PredictionParams{
 			Hour:             hour,
 			WaterTemp:        waterTemp,
 			AirTemp:          airTemp,
-			WeatherCondition: conditionStr,
+			WeatherCondition: weatherConditionValue,
 			WaterLevel:       waterLevel,
 		})
 		if err != nil {
@@ -139,14 +164,10 @@ func handlePrediction(airService conditions.AirDataProvider, service *surferdata
 			return
 		}
 
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"hour":              hour,
-			"water_temperature": waterTemp,
-			"air_temperature":   airTemp,
-			"weather_condition": conditionStr,
-			"water_level":       waterLevel,
-			"prediction":        prediction,
-		})
+		// Return the response as JSON
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(prediction)
+
 	}
 }
 
