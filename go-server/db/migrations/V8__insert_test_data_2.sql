@@ -1,8 +1,8 @@
 INSERT INTO surfer_entries (timestamp, count, water_temperature, air_temperature, weather_condition) VALUES
-    (NOW() - INTERVAL '1 hour', 3, 10.5, 15.0, 3),
-    (NOW() - INTERVAL '2 hours', 5, 10.7, 16.0, 0),
-    (NOW() - INTERVAL '3 hours', 2, 10.2, 14.5, 61),
-    (NOW() - INTERVAL '4 hours', 7, 10.9, 17.0, 0),
-    (NOW() - INTERVAL '5 hours', 4, 9.8, 13.0, 3),
-    (NOW() - INTERVAL '6 hours', 1, 9.5, 12.0, 61),
-    (NOW() - INTERVAL '7 hours', 6, 11.0, 18.0, 0);
+    ('2025-05-01 12:00:00', 3, 10.5, 15.0, 3),
+    ('2025-05-02 13:00:00', 5, 10.7, 16.0, 0),
+    ('2025-05-03 14:00:00', 2, 10.2, 14.5, 61),
+    ('2025-04-01 10:00:00', 7, 10.9, 17.0, 0),
+    ('2025-04-02 09:00:00', 4, 9.8, 13.0, 3),
+    ('2025-04-03 08:00:00', 1, 9.5, 12.0, 61),
+    ('2025-03-01 07:00:00', 6, 11.0, 18.0, 0);

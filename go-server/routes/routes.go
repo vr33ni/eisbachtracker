@@ -185,11 +185,9 @@ func handleSurferEntries(service *surferdata.Service) http.HandlerFunc {
 
 		case http.MethodPost:
 			var input struct {
-				Count      int       `json:"count"`
-				Time       time.Time `json:"timestamp"` // optional
-				WaterLevel *float64  `json:"water_level,omitempty"`
-				WaterFlow  *float64  `json:"water_flow,omitempty"`
-				WaterTemp  *float64  `json:"water_temperature,omitempty"`
+				Count     int       `json:"count"`
+				Time      time.Time `json:"timestamp"` // optional
+				WaterTemp *float64  `json:"water_temperature,omitempty"`
 			}
 
 			if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -201,7 +199,7 @@ func handleSurferEntries(service *surferdata.Service) http.HandlerFunc {
 				return
 			}
 
-			if err := service.AddEntry(input.Count, input.Time, input.WaterLevel, input.WaterFlow, input.WaterTemp); err != nil {
+			if err := service.AddEntry(input.Count, input.Time, input.WaterTemp); err != nil {
 				log.Printf("Failed to add entry: %v", err)
 				http.Error(w, "Failed to save entry", http.StatusInternalServerError)
 				return
