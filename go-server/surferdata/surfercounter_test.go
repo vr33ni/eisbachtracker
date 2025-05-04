@@ -30,7 +30,7 @@ type MockAirService struct{}
 func (m *MockAirService) GetCurrentWeather() (*conditions.WeatherData, error) {
 	return &conditions.WeatherData{
 		Temp:      22.3,
-		Condition: "Sunny",
+		Condition: 0,
 	}, nil
 }
 

@@ -4,7 +4,7 @@ func GetCurrentWeather() (*WeatherData, error) {
 	// Mock data
 	return &WeatherData{
 		Temp:      22,
-		Condition: "Clear",
+		Condition: 0, // clear
 	}, nil
 }
 

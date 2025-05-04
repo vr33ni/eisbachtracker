@@ -38,6 +38,8 @@
   "predictionHeading": "Prediction for the next hour",
   "predictedSurfers": "Predicted surfers:",
   "notEnoughData": "Not enough data to predict crowd",
+  "viewExplanation": "Explanation",
+
 
   "chart": {
     "waterLevelLabel": "Water Level (cm)",

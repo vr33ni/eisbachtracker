@@ -14,7 +14,7 @@ func TestCalculateFactorSunnyWarmPeak(t *testing.T) {
 	f := calculateFactor(
 		14,                // hour
 		utils.Float64(20), // water temp
-		&conditions.WeatherData{Temp: 25, Condition: "Clear"}, // weather
+		&conditions.WeatherData{Temp: 25, Condition: 0}, // clear
 		146, // water level
 		15,  // water flow (ignored for now)
 	)
@@ -32,7 +32,7 @@ func TestCalculateFactorColdRainyOffpeak(t *testing.T) {
 	f := calculateFactor(
 		6,                // hour
 		utils.Float64(5), // water temp
-		&conditions.WeatherData{Temp: 5, Condition: "Rain"}, // weather
+		&conditions.WeatherData{Temp: 5, Condition: 61}, // rain
 		135, // water level
 		10,  // water flow (ignored for now)
 	)
@@ -47,7 +47,7 @@ func TestCalculateFactorColdRainyOffpeak(t *testing.T) {
 func TestCalculateFactorLowWaterLevel(t *testing.T) {
 	testutils.LoadTestConfig(t)
 
-	f := calculateFactor(10, utils.Float64(15), &conditions.WeatherData{Temp: 15, Condition: "Clear"}, 135, 10)
+	f := calculateFactor(10, utils.Float64(15), &conditions.WeatherData{Temp: 15, Condition: 0}, 135, 10) // weather = clear
 
 	t.Logf("factor: %.2f", f)
 

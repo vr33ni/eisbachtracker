@@ -38,6 +38,7 @@
   "predictionHeading": "Prognose für die nächste Stunde",
   "predictedSurfers": "Prognostizierte Surfer:",
   "notEnoughData": "Nicht genügend Daten für Prognose",
+  "viewExplanation": "Erklärung",
 
   "chart": {
     "waterLevelLabel": "Wasserstand (cm)",

@@ -28,8 +28,16 @@ func calculateFactor(
 		factor -= 0.2
 	}
 
+	// 🌡️ Air temperature influence
+	if weatherData.Temp != 0 {
+		if weatherData.Temp > 20 {
+			factor += 0.2 // Warm air attracts more surfers
+		} else if weatherData.Temp < 5 {
+			factor -= 0.3 // Cold air deters surfers
+		}
+	}
 	// 🌧️ Weather influence
-	if weatherData.Condition == "Rain" || weatherData.Condition == "Snow" {
+	if weatherData.Condition == 61 || weatherData.Condition == 71 {
 		factor -= 0.3
 	}
 

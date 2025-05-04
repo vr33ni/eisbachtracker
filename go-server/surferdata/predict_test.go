@@ -39,7 +39,7 @@ func TestPredictSurferCount_AllFactorsSunny(t *testing.T) {
 		Hour:             14,
 		WaterTemp:        utils.Float64(18),
 		AirTemp:          utils.Float64(25),
-		WeatherCondition: "Clear",
+		WeatherCondition: 0,
 	})
 	if err != nil {
 		t.Fatalf("Prediction failed: %v", err)
@@ -55,7 +55,7 @@ func TestPredictSurferCount_AllFactorsBad(t *testing.T) {
 		Hour:             5,
 		WaterTemp:        utils.Float64(4),
 		AirTemp:          utils.Float64(2),
-		WeatherCondition: "Rain",
+		WeatherCondition: 61,
 	})
 	if err != nil {
 		t.Fatalf("Prediction failed: %v", err)

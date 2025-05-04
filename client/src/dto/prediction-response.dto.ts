@@ -4,5 +4,5 @@ export interface PredictionResponseDto {
     air_temperature: number
     weather_condition: string
     prediction: number
-  }
-  
+    explanation: Record<string, number>  
+}  
