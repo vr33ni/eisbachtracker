@@ -40,7 +40,7 @@ func TestAddAndGetEntries(t *testing.T) {
 	service.WaterService = &MockWaterService{}
 	service.AirService = &MockAirService{}
 
-	err := service.AddEntry(5, time.Now(), nil, nil, nil)
+	err := service.AddEntry(5, time.Now(), nil)
 	if err != nil {
 		t.Fatalf("Failed to add entry: %v", err)
 	}

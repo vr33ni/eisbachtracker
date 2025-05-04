@@ -193,19 +193,20 @@ const submitSurferCount = async () => {
   const count = surferCount.value
   if (!isNaN(count) && count >= 0) {
     submitting.value = true
-    await fetchWaterData() // 🆕 Get fresh data before submitting
+    // await fetchWaterData() // 🆕 Get fresh data before submitting or handle in the backend directly
     await addEntry(
       count,
       undefined,
-      currentWaterLevel.value ?? undefined,
-      currentWaterFlow.value ?? undefined,
-      waterTemperature.value ?? undefined
+      // currentWaterLevel.value ?? undefined,
+      // currentWaterFlow.value ?? undefined,
+      waterTemperature.value ?? undefined,
     )
     await fetchEntries()
     surferCountRaw.value = ''
     submitting.value = false
   }
 }
+
 onMounted(() => {
   // 1. Load last refresh from localStorage if available
   const saved = localStorage.getItem('lastRefresh')
